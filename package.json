@@ -1,0 +1,13 @@
+{
+  "name": "simkas-workspace",
+  "version": "1.0.0",
+  "description": "Sistem Informasi Manajemen UKM STMIK Lombok Monorepo Workspace",
+  "scripts": {
+    "dev": ".\\start-dev.bat",
+    "start": ".\\start-dev.bat",
+    "backend:dev": "npm --prefix ukm-management/backend run dev",
+    "backend:start": "npm --prefix ukm-management/backend start",
+    "frontend:dev": "npm --prefix ukm-management/frontend run dev",
+    "frontend:build": "npm --prefix ukm-management/frontend run build"
+  }
+}
