@@ -1,6 +1,7 @@
 // config/database.js
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
+const pg = require('pg');
 const path = require('path');
 
 let sequelize;
@@ -11,6 +12,7 @@ if (dbUrl && (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://
   // Supabase PostgreSQL mode
   sequelize = new Sequelize(dbUrl, {
     dialect: 'postgres',
+    dialectModule: pg,
     logging: false,
     dialectOptions: {
       ssl: {
