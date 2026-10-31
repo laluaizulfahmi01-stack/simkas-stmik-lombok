@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import ThemeToggle from '../components/ThemeToggle';
+import AnimatedNumber from '../components/AnimatedNumber';
 import PanoramicCurvedCarousel from '../components/PanoramicCurvedCarousel';
 import {
   FiCreditCard, FiCheckCircle, FiArrowUpRight,
@@ -331,61 +332,69 @@ export default function LandingPage() {
           {/* 4 Top Stat Cards matching INFLUENCY */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, textAlign: 'left', marginBottom: 60 }}>
             <ScrollRevealItem delay="stagger-delay-1">
-              <div style={{ background: '#d4ff00', borderRadius: 24, padding: 22, color: '#09090b', height: '100%', boxSizing: 'border-box' }}>
+              <div className="landing-hero-stat-card" style={{ background: '#d4ff00', borderRadius: 24, padding: 22, color: '#09090b', height: '100%', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
                     <FiUsers />
                   </div>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="landing-arrow-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FiArrowUpRight style={{ fontSize: 16 }} />
                   </div>
                 </div>
-                <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: -0.5 }}>600+</div>
+                <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: -0.5 }}>
+                  <AnimatedNumber value={600} suffix="+" />
+                </div>
                 <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4 }}>Mahasiswa Aktif</div>
               </div>
             </ScrollRevealItem>
 
             <ScrollRevealItem delay="stagger-delay-2">
-              <div style={{ background: '#ffffff', borderRadius: 24, padding: 22, border: '1px solid rgba(0,0,0,0.06)', height: '100%', boxSizing: 'border-box' }}>
+              <div className="landing-hero-stat-card" style={{ background: '#ffffff', borderRadius: 24, padding: 22, border: '1px solid rgba(0,0,0,0.06)', height: '100%', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#09090b' }}>
                     <FiShield />
                   </div>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="landing-arrow-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FiArrowUpRight style={{ fontSize: 16, color: '#09090b' }} />
                   </div>
                 </div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: '#09090b', letterSpacing: -0.5 }}>4 UKM</div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: '#09090b', letterSpacing: -0.5 }}>
+                  <AnimatedNumber value={4} suffix=" UKM" />
+                </div>
                 <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Organisasi Resmi</div>
               </div>
             </ScrollRevealItem>
 
             <ScrollRevealItem delay="stagger-delay-3">
-              <div style={{ background: '#ffffff', borderRadius: 24, padding: 22, border: '1px solid rgba(0,0,0,0.06)', height: '100%', boxSizing: 'border-box' }}>
+              <div className="landing-hero-stat-card" style={{ background: '#ffffff', borderRadius: 24, padding: 22, border: '1px solid rgba(0,0,0,0.06)', height: '100%', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#09090b' }}>
                     <FiAward />
                   </div>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="landing-arrow-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FiArrowUpRight style={{ fontSize: 16, color: '#09090b' }} />
                   </div>
                 </div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: '#09090b', letterSpacing: -0.5 }}>50+</div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: '#09090b', letterSpacing: -0.5 }}>
+                  <AnimatedNumber value={50} suffix="+" />
+                </div>
                 <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Prestasi Diraih</div>
               </div>
             </ScrollRevealItem>
 
             <ScrollRevealItem delay="stagger-delay-4">
-              <div style={{ background: '#ffffff', borderRadius: 24, padding: 22, border: '1px solid rgba(0,0,0,0.06)', height: '100%', boxSizing: 'border-box' }}>
+              <div className="landing-hero-stat-card" style={{ background: '#ffffff', borderRadius: 24, padding: 22, border: '1px solid rgba(0,0,0,0.06)', height: '100%', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#09090b' }}>
                     <FiZap />
                   </div>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="landing-arrow-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FiArrowUpRight style={{ fontSize: 16, color: '#09090b' }} />
                   </div>
                 </div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: '#09090b', letterSpacing: -0.5 }}>120+</div>
+                <div style={{ fontSize: 28, fontWeight: 900, color: '#09090b', letterSpacing: -0.5 }}>
+                  <AnimatedNumber value={120} suffix="+" />
+                </div>
                 <div style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>Kegiatan / Tahun</div>
               </div>
             </ScrollRevealItem>
@@ -562,8 +571,8 @@ export default function LandingPage() {
                       borderTop: '1px solid #f1f5f9',
                       marginBottom: 12,
                     }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8' }}>
-                        👥 {u.memberCount} Mahasiswa
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        👥 <AnimatedNumber value={u.memberCount} suffix="+" /> Mahasiswa
                       </span>
                       <button
                         type="button"

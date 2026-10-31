@@ -1,23 +1,55 @@
 // src/components/AnimatedNumber.jsx
-// Smooth Counting-Up Number Animation for SIMKAS Dashboard Metrics
+// Smooth Counting-Up Number Animation for SIMKAS Dashboard & Landing Page Metrics
 import { useState, useEffect, useRef } from 'react';
 
 export default function AnimatedNumber({
   value = 0,
-  duration = 900,
+  duration = 950,
   prefix = '',
   suffix = '',
   formatType = 'standard', // 'rupiah' | 'shortRupiah' | 'percent' | 'standard'
   formatter = null,
+  animateOnView = true,
 }) {
   const targetNum = typeof value === 'number'
     ? value
     : parseFloat(String(value).replace(/[^0-9.-]+/g, '')) || 0;
 
   const [displayValue, setDisplayValue] = useState(0);
+  const [hasStarted, setHasStarted] = useState(!animateOnView);
+  const containerRef = useRef(null);
   const prevValueRef = useRef(0);
 
+  // Trigger animation when the element enters the viewport
   useEffect(() => {
+    if (!animateOnView) {
+      setHasStarted(true);
+      return;
+    }
+
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setHasStarted(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasStarted(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [animateOnView]);
+
+  useEffect(() => {
+    if (!hasStarted) return;
+
     // If user prefers reduced motion, set immediately
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setDisplayValue(targetNum);
@@ -40,7 +72,7 @@ export default function AnimatedNumber({
       const elapsed = timestamp - startTimestamp;
       const progress = Math.min(elapsed / duration, 1);
 
-      // easeOutExpo deceleration curve: fast ramp-up -> ultra-buttery smooth landing
+      // easeOutExpo deceleration curve: fast ramp-up -> buttery smooth settle
       const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       const current = fromVal + (toVal - fromVal) * ease;
 
@@ -59,7 +91,7 @@ export default function AnimatedNumber({
     return () => {
       if (animFrameId) cancelAnimationFrame(animFrameId);
     };
-  }, [targetNum, duration]);
+  }, [hasStarted, targetNum, duration]);
 
   // Format the number dynamically as it counts up
   let formattedNumber = '';
@@ -88,6 +120,7 @@ export default function AnimatedNumber({
 
   return (
     <span
+      ref={containerRef}
       className="simkas-animated-number"
       style={{
         display: 'inline-block',
