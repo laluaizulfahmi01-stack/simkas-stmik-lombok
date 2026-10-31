@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../../components/Sidebar';
+import AnimatedNumber from '../../components/AnimatedNumber';
 import api from '../../api/axios';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
@@ -159,7 +160,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <div className="stat-card-val">
-                  {fmt(stats?.balance || 7850000)}
+                  <AnimatedNumber value={stats?.balance || 7850000} formatType="rupiah" />
                 </div>
                 <div className="stat-card-lbl">Bulan ini (Oktober 2026)</div>
               </div>
@@ -177,7 +178,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <div className="stat-card-val">
-                  85% <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Rp 8,5jt / Rp 10jt</span>
+                  <AnimatedNumber value={85} formatType="percent" /> <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>Rp 8,5jt / Rp 10jt</span>
                 </div>
                 <div className="stat-card-lbl">Target Kas & Iuran Terpenuhi</div>
               </div>
@@ -195,7 +196,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <div className="stat-card-val">
-                  {stats?.usersCount || 38} <span className="stat-card-subpill">+8 Baru</span>
+                  <AnimatedNumber value={stats?.usersCount || 38} /> <span className="stat-card-subpill">+8 Baru</span>
                 </div>
                 <div className="stat-card-lbl">Mahasiswa Terdata Aktif</div>
               </div>
@@ -213,7 +214,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <div className="stat-card-val">
-                  {totalTurnover > 0 ? fmt(totalTurnover) : 'Rp 18.234.000'}
+                  <AnimatedNumber value={totalTurnover > 0 ? totalTurnover : 18234000} formatType="rupiah" />
                 </div>
                 <div className="stat-card-lbl">Total Perputaran Kas Global</div>
               </div>

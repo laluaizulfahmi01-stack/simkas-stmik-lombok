@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../../components/Sidebar';
+import AnimatedNumber from '../../components/AnimatedNumber';
 import api from '../../api/axios';
 import {
   MdSearch, MdDownload, MdPrint, MdAccountBalance, MdClose,
@@ -313,7 +314,7 @@ export default function StudentKasPage() {
                 </div>
               </div>
               <div>
-                <div className="pro-stat-val">{fmt(balance)}</div>
+                <div className="pro-stat-val"><AnimatedNumber value={balance} formatType="rupiah" /></div>
                 <div className="pro-stat-lbl">Saldo Kas Tersedia</div>
                 <div className="pro-stat-sub">↗ Kas Terbuka {activeUkm?.name}</div>
               </div>
@@ -331,10 +332,10 @@ export default function StudentKasPage() {
               </div>
               <div>
                 <div className="pro-stat-val" style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                  88% <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Target Kas</span>
+                  <AnimatedNumber value={88} formatType="percent" /> <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Target Kas</span>
                 </div>
                 <div className="pro-stat-lbl">Realisasi Kas Anggota</div>
-                <div className="pro-stat-sub">{fmt(totalIncome)} terkumpul</div>
+                <div className="pro-stat-sub"><AnimatedNumber value={totalIncome} formatType="rupiah" /> terkumpul</div>
               </div>
             </div>
 
@@ -350,7 +351,7 @@ export default function StudentKasPage() {
               </div>
               <div>
                 <div className="pro-stat-val" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  38 <span className="badge badge-blue" style={{ fontSize: 11, padding: '2px 8px' }}>+6 Baru</span>
+                  <AnimatedNumber value={38} /> <span className="badge badge-blue" style={{ fontSize: 11, padding: '2px 8px' }}>+6 Baru</span>
                 </div>
                 <div className="pro-stat-lbl">Mahasiswa Terdata</div>
                 <div className="pro-stat-sub">Kontribusi Iuran Aktif</div>
@@ -368,7 +369,7 @@ export default function StudentKasPage() {
                 </div>
               </div>
               <div>
-                <div className="pro-stat-val">{fmt(totalIncome + totalExpense)}</div>
+                <div className="pro-stat-val"><AnimatedNumber value={totalIncome + totalExpense} formatType="rupiah" /></div>
                 <div className="pro-stat-lbl">Total Perputaran Kas</div>
                 <div className="pro-stat-sub">Histori 6 Bulan Terbuka</div>
               </div>
@@ -405,7 +406,7 @@ export default function StudentKasPage() {
                 <div>
                   <div className="pro-submetric-label">Total Pemasukan</div>
                   <div className="pro-submetric-val">
-                    {fmt(totalIncome)}
+                    <AnimatedNumber value={totalIncome} formatType="rupiah" />
                     <span className="pro-badge-trend positive">
                       <MdNorthEast style={{ fontSize: 12 }} /> +14.2%
                     </span>
@@ -416,7 +417,7 @@ export default function StudentKasPage() {
                 <div>
                   <div className="pro-submetric-label">Total Pengeluaran</div>
                   <div className="pro-submetric-val">
-                    {fmt(totalExpense)}
+                    <AnimatedNumber value={totalExpense} formatType="rupiah" />
                     <span className="pro-badge-trend neutral">
                       5.1% efisien
                     </span>
@@ -492,15 +493,15 @@ export default function StudentKasPage() {
               {/* Overlapping Bubbles with crystal clear visibility */}
               <div className="pro-bubbles-wrap">
                 <div className="pro-bubble lime">
-                  <div className="pro-bubble-val">{formatShortRupiah(totalIncome)}</div>
+                  <div className="pro-bubble-val"><AnimatedNumber value={totalIncome} formatType="shortRupiah" /></div>
                   <div className="pro-bubble-lbl">Pemasukan</div>
                 </div>
                 <div className="pro-bubble blue">
-                  <div className="pro-bubble-val">{formatShortRupiah(totalExpense)}</div>
+                  <div className="pro-bubble-val"><AnimatedNumber value={totalExpense} formatType="shortRupiah" /></div>
                   <div className="pro-bubble-lbl">Pengeluaran</div>
                 </div>
                 <div className="pro-bubble slate">
-                  <div className="pro-bubble-val">{formatShortRupiah(balance)}</div>
+                  <div className="pro-bubble-val"><AnimatedNumber value={balance} formatType="shortRupiah" /></div>
                   <div className="pro-bubble-lbl">Sisa Kas</div>
                 </div>
               </div>

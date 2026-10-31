@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import Sidebar from '../../components/Sidebar';
+import AnimatedNumber from '../../components/AnimatedNumber';
 import NotificationModal from '../../components/NotificationModal';
 import EventBannerCarousel from '../../components/EventBannerCarousel';
 import {
@@ -827,7 +828,7 @@ export default function StudentDashboard() {
                     </Link>
                   </div>
                   <div>
-                    <div className="stat-card-val">{fmt(stats?.balance)}</div>
+                    <div className="stat-card-val"><AnimatedNumber value={stats?.balance || 0} formatType="rupiah" /></div>
                     <div className="stat-card-lbl">Saldo Kas {activeUkm?.name}</div>
                   </div>
                 </div>
@@ -844,7 +845,7 @@ export default function StudentDashboard() {
                   </div>
                   <div>
                     <div className="stat-card-val">
-                      100% <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>presensi</span>
+                      <AnimatedNumber value={100} formatType="percent" /> <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>presensi</span>
                     </div>
                     <div className="stat-card-lbl">Status Kehadiran Aktif</div>
                   </div>
@@ -862,7 +863,7 @@ export default function StudentDashboard() {
                   </div>
                   <div>
                     <div className="stat-card-val">
-                      {stats?.memberCount || 24} <span className="stat-card-pill-tag">+Aktif</span>
+                      <AnimatedNumber value={stats?.memberCount || 24} /> <span className="stat-card-pill-tag">+Aktif</span>
                     </div>
                     <div className="stat-card-lbl">Mahasiswa Terdaftar</div>
                   </div>
@@ -879,7 +880,7 @@ export default function StudentDashboard() {
                     </Link>
                   </div>
                   <div>
-                    <div className="stat-card-val">{achievements.length || 3} Modul</div>
+                    <div className="stat-card-val"><AnimatedNumber value={achievements.length || 3} /> Modul</div>
                     <div className="stat-card-lbl">E-Book & Panduan Resmi</div>
                   </div>
                 </div>
@@ -975,17 +976,17 @@ export default function StudentDashboard() {
                   {/* Bubble Graphic */}
                   <div className="influency-bubble-stage">
                     <div className="bubble-lime">
-                      <span className="bubble-lime-val">98%</span>
+                      <span className="bubble-lime-val"><AnimatedNumber value={98} formatType="percent" /></span>
                       <span className="bubble-lime-lbl">Kehadiran</span>
                     </div>
 
                     <div className="bubble-blue">
-                      <span className="bubble-blue-val">12x</span>
+                      <span className="bubble-blue-val"><AnimatedNumber value={12} suffix="x" /></span>
                       <span className="bubble-blue-lbl">Kegiatan</span>
                     </div>
 
                     <div className="bubble-white">
-                      <span className="bubble-white-val">4</span>
+                      <span className="bubble-white-val"><AnimatedNumber value={4} /></span>
                       <span className="bubble-white-lbl">Modul</span>
                     </div>
                   </div>

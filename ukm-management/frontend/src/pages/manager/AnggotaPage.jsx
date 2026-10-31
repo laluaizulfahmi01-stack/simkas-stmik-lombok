@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../../components/Sidebar';
+import AnimatedNumber from '../../components/AnimatedNumber';
 import ProPageHeader from '../../components/ProPageHeader';
 import api from '../../api/axios';
 import {
@@ -103,7 +104,7 @@ export default function AnggotaPage() {
                 </div>
               </div>
               <div>
-                <div className="pro-stat-val">{members.length} Mahasiswa</div>
+                <div className="pro-stat-val"><AnimatedNumber value={members.length} /> Mahasiswa</div>
                 <div className="pro-stat-lbl">Total Anggota Terdaftar</div>
                 <div className="pro-stat-sub">Aktif & terdata di sistem</div>
               </div>

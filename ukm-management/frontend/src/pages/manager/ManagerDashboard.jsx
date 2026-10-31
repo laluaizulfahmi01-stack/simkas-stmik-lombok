@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../../components/Sidebar';
+import AnimatedNumber from '../../components/AnimatedNumber';
 import api from '../../api/axios';
 import {
   FiSearch, FiBell, FiChevronDown, FiArrowUpRight,
@@ -123,7 +124,7 @@ export default function ManagerDashboard() {
               </div>
               <div>
                 <div className="stat-card-val">
-                  {fmt(stats?.balance || 0)}
+                  <AnimatedNumber value={stats?.balance || 0} formatType="rupiah" />
                 </div>
                 <div className="stat-card-lbl">Saldo Kas Aktif ({activeUkm?.name})</div>
               </div>
@@ -141,7 +142,7 @@ export default function ManagerDashboard() {
               </div>
               <div>
                 <div className="stat-card-val">
-                  {fmt(stats?.totalIncome || 0)}
+                  <AnimatedNumber value={stats?.totalIncome || 0} formatType="rupiah" />
                 </div>
                 <div className="stat-card-lbl">Total Dana Kas Masuk</div>
               </div>
@@ -159,7 +160,7 @@ export default function ManagerDashboard() {
               </div>
               <div>
                 <div className="stat-card-val">
-                  {stats?.memberCount || 0} <span className="stat-card-subpill">Aktif</span>
+                  <AnimatedNumber value={stats?.memberCount || 0} /> <span className="stat-card-subpill">Aktif</span>
                 </div>
                 <div className="stat-card-lbl">Total Anggota Terdaftar</div>
               </div>
@@ -177,7 +178,7 @@ export default function ManagerDashboard() {
               </div>
               <div>
                 <div className="stat-card-val">
-                  {fmt(stats?.totalExpense || 0)}
+                  <AnimatedNumber value={stats?.totalExpense || 0} formatType="rupiah" />
                 </div>
                 <div className="stat-card-lbl">Total Kas Digunakan</div>
               </div>

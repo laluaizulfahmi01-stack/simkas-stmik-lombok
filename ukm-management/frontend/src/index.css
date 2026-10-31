@@ -262,20 +262,40 @@ body {
   display: flex;
   flex-direction: column;
   padding: 24px 18px;
-  position: sticky;
-  top: 16px;
-  height: calc(100vh - 32px);
-  flex-shrink: 0;
+  position: sticky !important;
+  top: 16px !important;
+  height: calc(100vh - 32px) !important;
+  max-height: calc(100vh - 32px) !important;
+  align-self: flex-start !important;
+  flex-shrink: 0 !important;
   box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.03);
-  z-index: 40;
-  overflow-y: auto;
+  z-index: 40 !important;
+  overflow-y: auto !important;
   color: var(--text-primary);
+  scrollbar-width: thin;
 }
 @media (max-width: 1024px) {
   .sidebar {
     border-radius: 0;
-    top: 0;
-    height: 100vh;
+    top: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+}
+@media (min-width: 1025px) {
+  .app-shell {
+    align-items: flex-start !important;
+    overflow-x: clip !important;
+  }
+  .sidebar {
+    position: sticky !important;
+    top: 16px !important;
+    height: calc(100vh - 32px) !important;
+    max-height: calc(100vh - 32px) !important;
+    align-self: flex-start !important;
+    flex-shrink: 0 !important;
+    overflow-y: auto !important;
+    z-index: 40 !important;
   }
 }
 [data-theme="dark"] .sidebar {
@@ -6161,13 +6181,13 @@ tr:hover td {
    SETTINGS PAGE RESPONSIVE LAYOUT & OVERFLOW PROTECTION
    ═════════════════════════════════════════════════════════════════════════ */
 html, body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
 }
 
 .app-shell {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .settings-tabs-header {
@@ -6295,14 +6315,15 @@ html, body {
    ============================================================================== */
 
 /* 1. Global Page Entrance & Canvas Transitions */
-.main-content {
-  animation: simkasPageGlide 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+.app-shell > div:not(.sidebar) {
+  animation: simkasPageGlide 0.44s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
 }
 
 @keyframes simkasPageGlide {
   0% {
     opacity: 0;
-    transform: translateY(14px) scale(0.996);
+    transform: translateY(18px) scale(0.992);
   }
   100% {
     opacity: 1;
@@ -6310,28 +6331,106 @@ html, body {
   }
 }
 
-/* 2. Cascading / Staggered Card Entrances */
-.main-content > .card:nth-of-type(1),
-.main-content > div > .card:nth-of-type(1),
+/* 2. Cascading Elastic Pop for Stat Cards & Dashboard Sections */
+@keyframes simkasStatPop {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.94);
+  }
+  70% {
+    transform: translateY(-2px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pro-dashboard-grid-4 > div:nth-child(1),
 .influency-grid-4 > div:nth-child(1) {
+  animation: simkasStatPop 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) 0.04s both;
+}
+
+.pro-dashboard-grid-4 > div:nth-child(2),
+.influency-grid-4 > div:nth-child(2) {
+  animation: simkasStatPop 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) 0.10s both;
+}
+
+.pro-dashboard-grid-4 > div:nth-child(3),
+.influency-grid-4 > div:nth-child(3) {
+  animation: simkasStatPop 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) 0.16s both;
+}
+
+.pro-dashboard-grid-4 > div:nth-child(4),
+.influency-grid-4 > div:nth-child(4) {
+  animation: simkasStatPop 0.48s cubic-bezier(0.34, 1.56, 0.64, 1) 0.22s both;
+}
+
+.pro-main-grid > div:nth-child(1),
+.influency-main-row > div:nth-child(1) {
+  animation: simkasStatPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.18s both;
+}
+
+.pro-main-grid > div:nth-child(2),
+.influency-main-row > div:nth-child(2) {
+  animation: simkasStatPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+}
+
+.fast-menu-grid > a:nth-child(1) { animation: simkasStatPop 0.44s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s both; }
+.fast-menu-grid > a:nth-child(2) { animation: simkasStatPop 0.44s cubic-bezier(0.34, 1.56, 0.64, 1) 0.10s both; }
+.fast-menu-grid > a:nth-child(3) { animation: simkasStatPop 0.44s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both; }
+.fast-menu-grid > a:nth-child(4) { animation: simkasStatPop 0.44s cubic-bezier(0.34, 1.56, 0.64, 1) 0.20s both; }
+.fast-menu-grid > a:nth-child(5) { animation: simkasStatPop 0.44s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s both; }
+
+/* 2b. Floating & Breathing Bubbles Dynamics */
+.pro-bubbles-wrap .pro-bubble,
+.influency-bubble-stage > div {
+  animation: simkasBubbleFloat 4s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.pro-bubbles-wrap .pro-bubble:nth-child(2),
+.influency-bubble-stage > div:nth-child(2) {
+  animation-delay: 0.8s;
+}
+.pro-bubbles-wrap .pro-bubble:nth-child(3),
+.influency-bubble-stage > div:nth-child(3) {
+  animation-delay: 1.6s;
+}
+
+@keyframes simkasBubbleFloat {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    transform: translateY(-5px) scale(1.02);
+  }
+}
+
+/* 2c. Tabular Numbers Dynamic Counting Up Styling */
+.simkas-animated-number {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  will-change: contents;
+}
+
+.main-content > .card:nth-of-type(1),
+.main-content > div > .card:nth-of-type(1) {
   animation: simkasCardCascade 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.04s both;
 }
 
 .main-content > .card:nth-of-type(2),
-.main-content > div > .card:nth-of-type(2),
-.influency-grid-4 > div:nth-child(2) {
+.main-content > div > .card:nth-of-type(2) {
   animation: simkasCardCascade 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
 }
 
 .main-content > .card:nth-of-type(3),
-.main-content > div > .card:nth-of-type(3),
-.influency-grid-4 > div:nth-child(3) {
+.main-content > div > .card:nth-of-type(3) {
   animation: simkasCardCascade 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
 }
 
 .main-content > .card:nth-of-type(4),
-.main-content > div > .card:nth-of-type(4),
-.influency-grid-4 > div:nth-child(4) {
+.main-content > div > .card:nth-of-type(4) {
   animation: simkasCardCascade 0.42s cubic-bezier(0.16, 1, 0.3, 1) 0.16s both;
 }
 
@@ -6474,7 +6573,7 @@ button:not([disabled]):active,
 /* 7. Ambient Moving Mesh Glow (Dynamic Visual Depth) */
 .app-shell {
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .app-shell::before {
