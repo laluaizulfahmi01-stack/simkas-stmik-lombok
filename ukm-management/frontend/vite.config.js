@@ -9,6 +9,7 @@ export default defineConfig({
     port: 5173,
   },
   build: {
+    emptyOutDir: true,
     chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {

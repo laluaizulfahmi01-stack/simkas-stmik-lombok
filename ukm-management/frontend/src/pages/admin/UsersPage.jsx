@@ -6,7 +6,7 @@ import api from '../../api/axios';
 import { useToast } from '../../components/Toast';
 import { MdAdd, MdEdit, MdDelete, MdClose, MdSearch } from 'react-icons/md';
 
-const PRODI = ['Teknik Informatika', 'Sistem Informasi', 'Komputerisasi Akuntansi'];
+const PRODI = ['Teknik Informatika', 'Sistem Informasi'];
 const EMPTY = { nim: '', name: '', prodi: '', password: '', role: 'student' };
 const ROLE_BADGE = { student: 'badge-blue', manager: 'badge-yellow', superadmin: 'badge-purple' };
 const ROLE_LABEL = { student: 'Mahasiswa', manager: 'Pengelola', superadmin: 'Super Admin' };

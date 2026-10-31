@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
@@ -11,7 +11,15 @@ import {
 } from 'react-icons/fi';
 
 export default function LoginPage() {
-  const [form, setForm] = useState({ nim: '', password: '' });
+  const [searchParams] = useSearchParams();
+  const prefilledNim = searchParams.get('nim') || '';
+  const [form, setForm] = useState({ nim: prefilledNim, password: '' });
+
+  useEffect(() => {
+    if (prefilledNim) {
+      setForm(prev => ({ ...prev, nim: prefilledNim }));
+    }
+  }, [prefilledNim]);
   const [showPw, setShowPw] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -137,6 +145,28 @@ export default function LoginPage() {
         <h1 className="glass-login-title">Welcome Back</h1>
         <div className="glass-login-sub">Sign in to continue</div>
 
+        {prefilledNim && (
+          <div
+            style={{
+              background: 'rgba(37, 99, 235, 0.08)',
+              border: '1px solid rgba(37, 99, 235, 0.25)',
+              borderRadius: 14,
+              padding: '10px 14px',
+              fontSize: 12.5,
+              color: '#1d4ed8',
+              fontWeight: 600,
+              marginBottom: 16,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              textAlign: 'left',
+            }}
+          >
+            <span style={{ fontSize: 16 }}>ℹ️</span>
+            <span>NIM <strong>{prefilledNim}</strong> sudah terdaftar di SIMKAS. Silakan masukkan kata sandi Anda untuk masuk ke akun.</span>
+          </div>
+        )}
+
         {/* ── Form Inputs ── */}
         <form onSubmit={submit} className="glass-login-form">
           {/* Username / NIM Input */}
@@ -147,7 +177,7 @@ export default function LoginPage() {
             <input
               className="glass-input-field"
               name="nim"
-              placeholder="Username or NIM"
+              placeholder="NIM, Nama, atau Username"
               value={form.nim}
               onChange={handle}
               required

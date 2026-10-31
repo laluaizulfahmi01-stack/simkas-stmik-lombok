@@ -4,9 +4,10 @@
   "description": "Backend API for Sistem Informasi Manajemen UKM STMIK Lombok",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "seed": "node seed.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "seed": "node seed.js",
+    "test": "node --test tests/"
   },
   "author": "",
   "license": "MIT",

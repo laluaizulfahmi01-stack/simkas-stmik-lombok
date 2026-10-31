@@ -9,7 +9,8 @@ import {
   MdAdd, MdCheckCircle, MdCancel, MdEventAvailable, MdClose,
   MdSave, MdSchedule, MdPlace, MdCalendarToday, MdMail,
   MdDoneAll, MdFactCheck, MdHistoryEdu, MdPerson, MdQrCode,
-  MdContentCopy, MdVisibility, MdPrint, MdSearch, MdNorthEast
+  MdContentCopy, MdVisibility, MdPrint, MdSearch, MdNorthEast,
+  MdCheck, MdLocalHospital, MdArrowBack, MdFilterList, MdOutlineChecklist
 } from 'react-icons/md';
 
 export default function ManagerAbsenPage() {
@@ -23,6 +24,8 @@ export default function ManagerAbsenPage() {
   const [selectedMeetingId, setSelectedMeetingId] = useState(null);
   const [rosterData, setRosterData] = useState([]);
   const [meetingDetail, setMeetingDetail] = useState(null);
+  const [checklistSearch, setChecklistSearch] = useState('');
+  const [checklistFilter, setChecklistFilter] = useState('all');
 
   // Modals
   const [meetingModal, setMeetingModal] = useState(false);
@@ -115,6 +118,19 @@ export default function ManagerAbsenPage() {
     );
   };
 
+  // Toggle Hadir / Alpa with 1-click
+  const toggleHadir = (userId) => {
+    setRosterData(prev =>
+      prev.map(item => {
+        if (item.userId !== userId) return item;
+        return {
+          ...item,
+          status: item.status === 'hadir' ? 'alpa' : 'hadir',
+        };
+      })
+    );
+  };
+
   // Change all student status at once
   const setAllStatus = status => {
     setRosterData(prev => prev.map(item => ({ ...item, status })));
@@ -204,11 +220,11 @@ export default function ManagerAbsenPage() {
 
         <div className="main-content">
           {/* Main Navigation Tabs */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 16, overflowX: 'auto' }}>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 24, borderBottom: '1px solid var(--border)', paddingBottom: 16, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             <button
               className={`btn ${tab === 'meetings' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setTab('meetings')}
-              style={{ borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              style={{ borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, whiteSpace: 'nowrap' }}
             >
               <MdCalendarToday /> Daftar Sesi Pertemuan ({meetings.length})
             </button>
@@ -216,15 +232,15 @@ export default function ManagerAbsenPage() {
             <button
               className={`btn ${tab === 'roster' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setTab('roster')}
-              style={{ borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              style={{ borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0, whiteSpace: 'nowrap', background: tab === 'roster' ? '#16a34a' : 'transparent', borderColor: tab === 'roster' ? '#16a34a' : 'transparent', color: tab === 'roster' ? '#fff' : 'inherit' }}
             >
-              <MdFactCheck /> Lembar Presensi Roster
+              <MdFactCheck style={{ fontSize: 17 }} /> ✓ Lembar Ceklis Presensi
             </button>
 
             <button
               className={`btn ${tab === 'leave' ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => setTab('leave')}
-              style={{ borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, position: 'relative' }}
+              style={{ borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, position: 'relative', flexShrink: 0, whiteSpace: 'nowrap' }}
             >
               <MdMail /> Kotak Izin Masuk ({leaveRequests.length})
               {pendingLeaves.length > 0 && (
@@ -248,14 +264,16 @@ export default function ManagerAbsenPage() {
           {/* TAB 1: DAFTAR PERTEMUAN */}
           {tab === 'meetings' && (
             <div className="card">
-              <div className="flex justify-between items-center" style={{ marginBottom: 18 }}>
+              <div className="flex justify-between items-center" style={{ marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
                 <div>
-                  <h3 style={{ fontSize: 16, fontWeight: 800 }}>Daftar Sesi Pertemuan {activeUkm?.name}</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                    Bagikan Token QR kepada mahasiswa agar mereka dapat melakukan Check-In mandiri.
+                  <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px' }}>
+                    Daftar Sesi Pertemuan {activeUkm?.name}
+                  </h3>
+                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+                    Lakukan presensi kehadiran anggota UKM per pertemuan secara langsung dengan sistem ceklis pengelola.
                   </p>
                 </div>
-                <button className="btn btn-primary btn-sm" onClick={() => setMeetingModal(true)}>
+                <button className="btn btn-primary btn-sm" onClick={() => setMeetingModal(true)} style={{ borderRadius: 10, padding: '8px 16px', fontWeight: 600 }}>
                   <MdAdd /> Tambah Sesi
                 </button>
               </div>
@@ -266,274 +284,730 @@ export default function ManagerAbsenPage() {
                   <p>Belum ada sesi pertemuan. Klik tombol di atas untuk membuat pertemuan pertama!</p>
                 </div>
               ) : (
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Sesi</th>
-                        <th>Agenda & Judul Pertemuan</th>
-                        <th>Jadwal & Tempat</th>
-                        <th>Token Presensi Mandiri</th>
-                        <th>Rekap Kehadiran</th>
-                        <th>Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                <>
+                  {/* 1. Desktop Table View */}
+                  <div className="table-wrap desktop-table-only">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Sesi</th>
+                          <th>Agenda & Topik Pertemuan</th>
+                          <th>Jadwal & Tempat</th>
+                          <th>Status Ceklis Kehadiran</th>
+                          <th>Aksi Presensi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {meetings.map(m => {
+                          const mHadir = m.attendances?.filter(a => a.status === 'hadir').length || 0;
+                          const mIzin = m.attendances?.filter(a => a.status === 'izin').length || 0;
+                          const mSakit = m.attendances?.filter(a => a.status === 'sakit').length || 0;
+                          const mAlpa = m.attendances?.filter(a => a.status === 'alpa' || a.status === 'alpha').length || 0;
+                          const mTotal = (m.attendances || []).length;
+                          const isDone = mTotal > 0;
+
+                          return (
+                            <tr key={m.id}>
+                              <td>
+                                <span style={{ fontWeight: 800, color: 'var(--primary)', background: '#eff6ff', padding: '4px 10px', borderRadius: 8 }}>
+                                  #{m.meetingNumber}
+                                </span>
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 14 }}>{m.title}</div>
+                                {m.agenda && (
+                                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                                    {m.agenda}
+                                  </div>
+                                )}
+                              </td>
+                              <td>
+                                <div style={{ fontSize: 13, fontWeight: 600 }}>
+                                  <MdCalendarToday style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                                  {m.date}
+                                </div>
+                                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                                  <MdSchedule style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                                  {m.time} &bull; {m.location}
+                                </div>
+                              </td>
+                              <td>
+                                <div>
+                                  <span
+                                    className={`badge ${isDone ? 'badge-green' : 'badge-yellow'}`}
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 4, fontWeight: 700 }}
+                                  >
+                                    {isDone ? <MdCheckCircle /> : <MdSchedule />}
+                                    {isDone ? 'Sudah Diceklis' : 'Belum Diceklis'}
+                                  </span>
+                                  {isDone && (
+                                    <div style={{ display: 'flex', gap: 6, fontSize: 11, flexWrap: 'wrap' }}>
+                                      <span style={{ color: '#16a34a', fontWeight: 700 }}>{mHadir} Hadir</span>
+                                      {mIzin > 0 && <span style={{ color: '#d97706', fontWeight: 600 }}>{mIzin} Izin</span>}
+                                      {mSakit > 0 && <span style={{ color: '#0284c7', fontWeight: 600 }}>{mSakit} Sakit</span>}
+                                      {mAlpa > 0 && <span style={{ color: '#dc2626', fontWeight: 600 }}>{mAlpa} Alpa</span>}
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                  <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={() => {
+                                      setSelectedMeetingId(m.id);
+                                      setTab('roster');
+                                    }}
+                                    style={{
+                                      background: '#16a34a',
+                                      borderColor: '#16a34a',
+                                      color: '#ffffff',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 6,
+                                      fontWeight: 700,
+                                      padding: '7px 14px',
+                                      borderRadius: 10,
+                                      boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)',
+                                    }}
+                                  >
+                                    <MdFactCheck style={{ fontSize: 16 }} /> Ceklis Presensi
+                                  </button>
+                                  <button
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => setQrModalItem(m)}
+                                    title="Opsi QR & Token Cadangan"
+                                    style={{ padding: '6px 8px', borderRadius: 8 }}
+                                  >
+                                    <MdQrCode style={{ fontSize: 16 }} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* 2. Mobile Clean Cards View */}
+                  <div className="mobile-cards-only">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       {meetings.map(m => {
-                        const hadirCount = m.attendances?.filter(a => a.status === 'hadir').length || 0;
-                        const izinCount = m.attendances?.filter(a => a.status === 'izin').length || 0;
-                        const alphaCount = m.attendances?.filter(a => a.status === 'alpha').length || 0;
+                        const mHadir = m.attendances?.filter(a => a.status === 'hadir').length || 0;
+                        const mIzin = m.attendances?.filter(a => a.status === 'izin').length || 0;
+                        const mSakit = m.attendances?.filter(a => a.status === 'sakit').length || 0;
+                        const mAlpa = m.attendances?.filter(a => a.status === 'alpa' || a.status === 'alpha').length || 0;
+                        const isDone = (m.attendances || []).length > 0;
 
                         return (
-                          <tr key={m.id}>
-                            <td>
-                              <span style={{ fontWeight: 800, color: 'var(--primary)', background: '#eff6ff', padding: '4px 10px', borderRadius: 8 }}>
-                                #{m.meetingNumber}
+                          <div key={m.id} className="mobile-tx-card">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                              <span style={{ fontWeight: 800, color: 'var(--primary)', background: '#eff6ff', padding: '3px 8px', borderRadius: 8, fontSize: 12 }}>
+                                Sesi #{m.meetingNumber}
                               </span>
-                            </td>
-                            <td>
-                              <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{m.title}</div>
-                              {m.agenda && (
-                                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
-                                  {m.agenda}
-                                </div>
-                              )}
-                            </td>
-                            <td>
-                              <div style={{ fontSize: 13, fontWeight: 600 }}>
-                                <MdCalendarToday style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                                {m.date}
+                              <span
+                                className={`badge ${isDone ? 'badge-green' : 'badge-yellow'}`}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, padding: '3px 8px' }}
+                              >
+                                {isDone ? <MdCheckCircle /> : <MdSchedule />}
+                                {isDone ? 'Sudah Diceklis' : 'Belum Diceklis'}
+                              </span>
+                            </div>
+
+                            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)', marginBottom: 4 }}>
+                              {m.title}
+                            </div>
+                            {m.agenda && (
+                              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>
+                                {m.agenda}
                               </div>
-                              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                                <MdSchedule style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                                {m.time} &bull; {m.location}
+                            )}
+
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>
+                              <div>📅 {m.date} &bull; 🕒 {m.time}</div>
+                              <div>📍 {m.location}</div>
+                            </div>
+
+                            {isDone && (
+                              <div style={{ display: 'flex', gap: 6, fontSize: 11, marginBottom: 12, flexWrap: 'wrap' }}>
+                                <span style={{ color: '#16a34a', fontWeight: 700 }}>{mHadir} Hadir</span>
+                                {mIzin > 0 && <span style={{ color: '#d97706', fontWeight: 600 }}>{mIzin} Izin</span>}
+                                {mSakit > 0 && <span style={{ color: '#0284c7', fontWeight: 600 }}>{mSakit} Sakit</span>}
+                                {mAlpa > 0 && <span style={{ color: '#dc2626', fontWeight: 600 }}>{mAlpa} Alpa</span>}
                               </div>
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span
-                                  className="badge badge-purple"
-                                  style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 12, letterSpacing: 0.5 }}
-                                >
-                                  {m.qrToken || `UKM${activeId}-M${m.meetingNumber}`}
-                                </span>
-                                <button
-                                  className="btn btn-ghost btn-sm"
-                                  style={{ padding: '4px 8px' }}
-                                  onClick={() => setQrModalItem(m)}
-                                  title="Tampilkan QR & Token Presensi"
-                                >
-                                  <MdQrCode style={{ fontSize: 16 }} />
-                                </button>
-                              </div>
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', gap: 6 }}>
-                                <span className="badge badge-green">{hadirCount} Hadir</span>
-                                <span className="badge badge-yellow">{izinCount} Izin</span>
-                                <span className="badge badge-red">{alphaCount} Alpha</span>
-                              </div>
-                            </td>
-                            <td>
-                              <div style={{ display: 'flex', gap: 6 }}>
-                                <button
-                                  className="btn btn-primary btn-sm"
-                                  onClick={() => {
-                                    setSelectedMeetingId(m.id);
-                                    setTab('roster');
-                                  }}
-                                >
-                                  <MdFactCheck /> Absen Roster
-                                </button>
-                                <button
-                                  className="btn btn-ghost btn-sm"
-                                  onClick={() => setQrModalItem(m)}
-                                >
-                                  <MdQrCode /> QR Sesi
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
+                            )}
+
+                            <button
+                              className="btn btn-primary"
+                              onClick={() => {
+                                setSelectedMeetingId(m.id);
+                                setTab('roster');
+                              }}
+                              style={{
+                                width: '100%',
+                                background: '#16a34a',
+                                borderColor: '#16a34a',
+                                color: '#ffffff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 8,
+                                fontWeight: 700,
+                                padding: '10px 14px',
+                                borderRadius: 10,
+                              }}
+                            >
+                              <MdFactCheck style={{ fontSize: 18 }} /> Buka Lembar Ceklis Presensi
+                            </button>
+                          </div>
                         );
                       })}
-                    </tbody>
-                  </table>
-                </div>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}
 
-          {/* TAB 2: LEMBAR PRESENSI ANGGOTA (ROSTER) */}
-          {tab === 'roster' && (
-            <div className="card">
-              <div className="flex justify-between items-center" style={{ marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
-                <div>
-                  <h3 style={{ fontSize: 16, fontWeight: 800 }}>
-                    Lembar Absensi: {meetingDetail?.title || 'Pilih Pertemuan'}
-                  </h3>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                    Pilih status kehadiran setiap mahasiswa, lalu klik "Simpan Presensi".
-                  </p>
-                </div>
+          {/* TAB 2: LEMBAR CEKLIS PRESENSI PER PERTEMUAN */}
+          {tab === 'roster' && (() => {
+            const hadirCount = rosterData.filter(r => r.status === 'hadir').length;
+            const izinCount = rosterData.filter(r => r.status === 'izin').length;
+            const sakitCount = rosterData.filter(r => r.status === 'sakit').length;
+            const alpaCount = rosterData.filter(r => r.status === 'alpa' || r.status === 'alpha').length;
+            const totalRoster = rosterData.length;
+            const pctHadir = totalRoster ? Math.round((hadirCount / totalRoster) * 100) : 0;
 
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <select
-                    className="input"
-                    style={{ width: 'auto', padding: '8px 14px', fontSize: 13 }}
-                    value={selectedMeetingId || ''}
-                    onChange={e => setSelectedMeetingId(Number(e.target.value))}
-                  >
-                    {meetings.map(m => (
-                      <option key={m.id} value={m.id}>
-                        Pertemuan #{m.meetingNumber}: {m.title} ({m.date})
-                      </option>
-                    ))}
-                  </select>
+            const filteredRoster = rosterData.filter(item => {
+              const q = checklistSearch.toLowerCase().trim();
+              const matchSearch =
+                !q ||
+                item.name?.toLowerCase().includes(q) ||
+                item.nim?.toLowerCase().includes(q) ||
+                item.prodi?.toLowerCase().includes(q);
 
-                  {meetingDetail && (
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => setQrModalItem(meetingDetail)}
-                    >
-                      <MdQrCode /> Tampilkan QR Sesi
-                    </button>
-                  )}
-                </div>
-              </div>
+              const matchFilter =
+                checklistFilter === 'all' ||
+                item.status === checklistFilter ||
+                (checklistFilter === 'alpa' && (item.status === 'alpa' || item.status === 'alpha'));
 
-              {/* Quick Actions */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: 'var(--bg-main)',
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  marginBottom: 18,
-                  flexWrap: 'wrap',
-                  gap: 12,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                  <span>Set Semua Anggota Menjadi:</span>
-                  <button className="btn btn-sm" style={{ background: '#dcfce7', color: '#15803d' }} onClick={() => setAllStatus('hadir')}>
-                    Hadir Semua
-                  </button>
-                  <button className="btn btn-sm" style={{ background: '#fee2e2', color: '#b91c1c' }} onClick={() => setAllStatus('alpha')}>
-                    Alpha Semua
-                  </button>
-                </div>
+              return matchSearch && matchFilter;
+            });
 
+            return (
+              <div className="card">
+                {/* Back to Meetings button */}
                 <button
-                  className="btn btn-primary"
-                  onClick={handleSaveRoster}
-                  disabled={savingRoster || !rosterData.length}
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => setTab('meetings')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 14, fontWeight: 700, padding: '6px 12px', borderRadius: 8 }}
                 >
-                  <MdSave /> {savingRoster ? 'Menyimpan...' : 'Simpan Presensi Pertemuan'}
+                  <MdArrowBack /> Kembali ke Daftar Sesi Pertemuan
                 </button>
-              </div>
 
-              {/* Roster Table */}
-              {rosterData.length === 0 ? (
-                <div className="empty-state">
-                  <div className="icon">👥</div>
-                  <p>Belum ada mahasiswa yang terdaftar di UKM ini.</p>
-                </div>
-              ) : (
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>NIM</th>
-                        <th>Nama Mahasiswa</th>
-                        <th>Program Studi</th>
-                        <th>Status Presensi</th>
-                        <th>Keterangan Tambahan</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rosterData.map((item, idx) => (
-                        <tr key={item.userId}>
-                          <td style={{ color: 'var(--text-muted)' }}>{idx + 1}</td>
-                          <td style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 13 }}>{item.nim}</td>
-                          <td style={{ fontWeight: 600 }}>{item.name}</td>
-                          <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{item.prodi}</td>
-                          <td>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              <button
-                                type="button"
-                                onClick={() => setStudentStatus(item.userId, 'hadir')}
-                                style={{
-                                  padding: '4px 10px',
-                                  borderRadius: 8,
-                                  fontSize: 12,
-                                  fontWeight: 700,
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  background: item.status === 'hadir' ? '#16a34a' : 'var(--bg-main)',
-                                  color: item.status === 'hadir' ? '#fff' : 'var(--text-muted)',
-                                }}
-                              >
-                                Hadir
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setStudentStatus(item.userId, 'izin')}
-                                style={{
-                                  padding: '4px 10px',
-                                  borderRadius: 8,
-                                  fontSize: 12,
-                                  fontWeight: 700,
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  background: item.status === 'izin' ? '#d97706' : 'var(--bg-main)',
-                                  color: item.status === 'izin' ? '#fff' : 'var(--text-muted)',
-                                }}
-                              >
-                                Izin
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setStudentStatus(item.userId, 'alpha')}
-                                style={{
-                                  padding: '4px 10px',
-                                  borderRadius: 8,
-                                  fontSize: 12,
-                                  fontWeight: 700,
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  background: item.status === 'alpha' ? '#dc2626' : 'var(--bg-main)',
-                                  color: item.status === 'alpha' ? '#fff' : 'var(--text-muted)',
-                                }}
-                              >
-                                Alpha
-                              </button>
-                            </div>
-                          </td>
-                          <td>
-                            <input
-                              className="input"
-                              placeholder="Catatan..."
-                              style={{ height: 32, fontSize: 12 }}
-                              value={item.keterangan || ''}
-                              onChange={e => {
-                                const val = e.target.value;
-                                setRosterData(prev =>
-                                  prev.map(x => (x.userId === item.userId ? { ...x, keterangan: val } : x))
-                                );
-                              }}
-                            />
-                          </td>
-                        </tr>
+                {/* Checklist Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 14, marginBottom: 20 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+                      <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                        Lembar Ceklis: {meetingDetail?.title || 'Pilih Pertemuan'}
+                      </h3>
+                      <span className="badge badge-blue" style={{ fontWeight: 800, fontSize: 12, padding: '3px 10px' }}>
+                        Sesi #{meetingDetail?.meetingNumber}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+                      📅 {meetingDetail?.date} &bull; 🕒 {meetingDetail?.time} &bull; 📍 {meetingDetail?.location}
+                    </p>
+                  </div>
+
+                  {/* Sesi Switcher Dropdown */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Pilih Sesi:</span>
+                    <select
+                      className="input"
+                      style={{ width: 'auto', padding: '6px 12px', fontSize: 13, height: 38 }}
+                      value={selectedMeetingId || ''}
+                      onChange={e => setSelectedMeetingId(Number(e.target.value))}
+                    >
+                      {meetings.map(m => (
+                        <option key={m.id} value={m.id}>
+                          #{m.meetingNumber}: {m.title} ({m.date})
+                        </option>
                       ))}
-                    </tbody>
-                  </table>
+                    </select>
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* Quick Attendance Stats & Batch Action Bar */}
+                <div
+                  style={{
+                    background: 'var(--bg-subtle)',
+                    border: '1px solid var(--border)',
+                    padding: '16px 18px',
+                    borderRadius: 16,
+                    marginBottom: 20,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 14,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                    {/* Live Counters */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        Total {totalRoster} Anggota:
+                      </span>
+                      <span className="badge badge-green" style={{ fontSize: 12, padding: '4px 10px', fontWeight: 700 }}>
+                        ✓ {hadirCount} Hadir ({pctHadir}%)
+                      </span>
+                      <span className="badge badge-yellow" style={{ fontSize: 12, padding: '4px 10px', fontWeight: 700 }}>
+                        {izinCount} Izin
+                      </span>
+                      <span className="badge badge-blue" style={{ fontSize: 12, padding: '4px 10px', fontWeight: 700 }}>
+                        {sakitCount} Sakit
+                      </span>
+                      <span className="badge badge-red" style={{ fontSize: 12, padding: '4px 10px', fontWeight: 700 }}>
+                        {alpaCount} Alpa
+                      </span>
+                    </div>
+
+                    {/* Batch Actions & Save */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        style={{ background: '#dcfce7', color: '#15803d', fontWeight: 700, borderRadius: 8, border: '1px solid #bbf7d0' }}
+                        onClick={() => setAllStatus('hadir')}
+                      >
+                        ✓ Ceklis Semua Hadir
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        style={{ background: '#fee2e2', color: '#b91c1c', fontWeight: 700, borderRadius: 8, border: '1px solid #fecaca' }}
+                        onClick={() => setAllStatus('alpa')}
+                      >
+                        Set Alpa Semua
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleSaveRoster}
+                        disabled={savingRoster || !rosterData.length}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 10, fontWeight: 700 }}
+                      >
+                        <MdSave /> {savingRoster ? 'Menyimpan...' : 'Simpan Presensi Pertemuan'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Checklist Search & Filter Bar */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+                  <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
+                    <MdSearch style={{ position: 'absolute', left: 12, top: 11, color: 'var(--text-muted)', fontSize: 18 }} />
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="Cari nama atau NIM anggota..."
+                      value={checklistSearch}
+                      onChange={e => setChecklistSearch(e.target.value)}
+                      style={{ paddingLeft: 38, height: 40, fontSize: 13, background: 'var(--bg-surface)' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Filter:</span>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${checklistFilter === 'all' ? 'btn-primary' : 'btn-ghost'}`}
+                      style={{ borderRadius: 8, fontSize: 12, padding: '5px 12px' }}
+                      onClick={() => setChecklistFilter('all')}
+                    >
+                      Semua ({totalRoster})
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${checklistFilter === 'hadir' ? 'btn-primary' : 'btn-ghost'}`}
+                      style={{ borderRadius: 8, fontSize: 12, padding: '5px 12px' }}
+                      onClick={() => setChecklistFilter('hadir')}
+                    >
+                      Hadir ({hadirCount})
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${checklistFilter === 'izin' ? 'btn-primary' : 'btn-ghost'}`}
+                      style={{ borderRadius: 8, fontSize: 12, padding: '5px 12px' }}
+                      onClick={() => setChecklistFilter('izin')}
+                    >
+                      Izin ({izinCount})
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${checklistFilter === 'sakit' ? 'btn-primary' : 'btn-ghost'}`}
+                      style={{ borderRadius: 8, fontSize: 12, padding: '5px 12px' }}
+                      onClick={() => setChecklistFilter('sakit')}
+                    >
+                      Sakit ({sakitCount})
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${checklistFilter === 'alpa' ? 'btn-primary' : 'btn-ghost'}`}
+                      style={{ borderRadius: 8, fontSize: 12, padding: '5px 12px' }}
+                      onClick={() => setChecklistFilter('alpa')}
+                    >
+                      Alpa ({alpaCount})
+                    </button>
+                  </div>
+                </div>
+
+                {/* Roster Checklist Content */}
+                {rosterData.length === 0 ? (
+                  <div className="empty-state">
+                    <div className="icon">👥</div>
+                    <p>Belum ada mahasiswa yang terdaftar di UKM ini.</p>
+                  </div>
+                ) : filteredRoster.length === 0 ? (
+                  <div className="empty-state">
+                    <div className="icon">🔍</div>
+                    <p>Tidak ada mahasiswa yang cocok dengan pencarian / filter.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* 1. Desktop Checklist Table View */}
+                    <div className="table-wrap desktop-table-only">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th style={{ width: 44, textAlign: 'center' }}>Ceklis</th>
+                            <th>#</th>
+                            <th>NIM & Mahasiswa</th>
+                            <th>Program Studi</th>
+                            <th>Status Kehadiran Pertemuan</th>
+                            <th>Keterangan / Catatan</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredRoster.map((item, idx) => {
+                            const isHadir = item.status === 'hadir';
+                            const isIzin = item.status === 'izin';
+                            const isSakit = item.status === 'sakit';
+                            const isAlpa = item.status === 'alpa' || item.status === 'alpha';
+
+                            return (
+                              <tr
+                                key={item.userId}
+                                style={{
+                                  background: isHadir ? 'rgba(34, 197, 94, 0.05)' : isIzin ? 'rgba(245, 158, 11, 0.05)' : isSakit ? 'rgba(6, 182, 212, 0.05)' : 'transparent',
+                                  transition: 'background 0.2s',
+                                }}
+                              >
+                                {/* Quick 1-Click Toggle Checkbox */}
+                                <td style={{ textAlign: 'center' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={isHadir}
+                                    onChange={() => toggleHadir(item.userId)}
+                                    title={isHadir ? 'Klik untuk ubah menjadi Alpa' : 'Klik untuk Ceklis Hadir'}
+                                    style={{
+                                      width: 20,
+                                      height: 20,
+                                      accentColor: '#16a34a',
+                                      cursor: 'pointer',
+                                    }}
+                                  />
+                                </td>
+                                <td style={{ color: 'var(--text-muted)' }}>{idx + 1}</td>
+                                <td>
+                                  <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13.5 }}>
+                                    {item.name}
+                                  </div>
+                                  <div style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--text-muted)' }}>
+                                    NIM: {item.nim}
+                                  </div>
+                                  {item.hasApprovedLeave && (
+                                    <span className="badge badge-yellow" style={{ fontSize: 10, padding: '2px 6px', marginTop: 3 }}>
+                                      📄 Surat Izin Disetujui
+                                    </span>
+                                  )}
+                                </td>
+                                <td style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{item.prodi}</td>
+                                <td>
+                                  {/* 4 Multi-Status Buttons */}
+                                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => setStudentStatus(item.userId, 'hadir')}
+                                      style={{
+                                        padding: '5px 12px',
+                                        borderRadius: 8,
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        border: '1px solid',
+                                        borderColor: isHadir ? '#16a34a' : 'var(--border)',
+                                        cursor: 'pointer',
+                                        background: isHadir ? '#16a34a' : 'var(--bg-surface)',
+                                        color: isHadir ? '#ffffff' : 'var(--text-secondary)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      <MdCheckCircle style={{ fontSize: 14 }} /> Hadir
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setStudentStatus(item.userId, 'izin')}
+                                      style={{
+                                        padding: '5px 12px',
+                                        borderRadius: 8,
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        border: '1px solid',
+                                        borderColor: isIzin ? '#d97706' : 'var(--border)',
+                                        cursor: 'pointer',
+                                        background: isIzin ? '#d97706' : 'var(--bg-surface)',
+                                        color: isIzin ? '#ffffff' : 'var(--text-secondary)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      <MdEventAvailable style={{ fontSize: 14 }} /> Izin
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setStudentStatus(item.userId, 'sakit')}
+                                      style={{
+                                        padding: '5px 12px',
+                                        borderRadius: 8,
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        border: '1px solid',
+                                        borderColor: isSakit ? '#0284c7' : 'var(--border)',
+                                        cursor: 'pointer',
+                                        background: isSakit ? '#0284c7' : 'var(--bg-surface)',
+                                        color: isSakit ? '#ffffff' : 'var(--text-secondary)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      <MdLocalHospital style={{ fontSize: 14 }} /> Sakit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setStudentStatus(item.userId, 'alpa')}
+                                      style={{
+                                        padding: '5px 12px',
+                                        borderRadius: 8,
+                                        fontSize: 12,
+                                        fontWeight: 700,
+                                        border: '1px solid',
+                                        borderColor: isAlpa ? '#dc2626' : 'var(--border)',
+                                        cursor: 'pointer',
+                                        background: isAlpa ? '#dc2626' : 'var(--bg-surface)',
+                                        color: isAlpa ? '#ffffff' : 'var(--text-secondary)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                        transition: 'all 0.15s ease',
+                                      }}
+                                    >
+                                      <MdCancel style={{ fontSize: 14 }} /> Alpa
+                                    </button>
+                                  </div>
+                                </td>
+                                <td>
+                                  <input
+                                    className="input"
+                                    placeholder="Catatan..."
+                                    style={{ height: 34, fontSize: 12, background: 'var(--bg-surface)' }}
+                                    value={item.keterangan || ''}
+                                    onChange={e => {
+                                      const val = e.target.value;
+                                      setRosterData(prev =>
+                                        prev.map(x => (x.userId === item.userId ? { ...x, keterangan: val } : x))
+                                      );
+                                    }}
+                                  />
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* 2. Mobile Clean Checklist Cards View */}
+                    <div className="mobile-cards-only">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        {filteredRoster.map((item) => {
+                          const isHadir = item.status === 'hadir';
+                          const isIzin = item.status === 'izin';
+                          const isSakit = item.status === 'sakit';
+                          const isAlpa = item.status === 'alpa' || item.status === 'alpha';
+
+                          return (
+                            <div
+                              key={item.userId}
+                              className="mobile-tx-card"
+                              style={{
+                                borderLeft: isHadir ? '4px solid #16a34a' : isIzin ? '4px solid #d97706' : isSakit ? '4px solid #0284c7' : '4px solid #dc2626',
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                                <div>
+                                  <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--text-primary)' }}>
+                                    {item.name}
+                                  </div>
+                                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                                    NIM: {item.nim} &bull; {item.prodi}
+                                  </div>
+                                </div>
+                                <span
+                                  className={`badge ${isHadir ? 'badge-green' : isIzin ? 'badge-yellow' : isSakit ? 'badge-blue' : 'badge-red'}`}
+                                  style={{ textTransform: 'capitalize', fontWeight: 800 }}
+                                >
+                                  {item.status}
+                                </span>
+                              </div>
+
+                              {item.hasApprovedLeave && (
+                                <div style={{ fontSize: 11, color: '#b45309', background: '#fef3c7', padding: '4px 8px', borderRadius: 6, marginBottom: 8 }}>
+                                  📄 Surat Izin Disetujui
+                                </div>
+                              )}
+
+                              {/* 4 Touch-friendly Buttons */}
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 8 }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setStudentStatus(item.userId, 'hadir')}
+                                  style={{
+                                    padding: '8px 4px',
+                                    borderRadius: 8,
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    background: isHadir ? '#16a34a' : 'var(--bg-subtle)',
+                                    color: isHadir ? '#fff' : 'var(--text-secondary)',
+                                    textAlign: 'center',
+                                  }}
+                                >
+                                  Hadir
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setStudentStatus(item.userId, 'izin')}
+                                  style={{
+                                    padding: '8px 4px',
+                                    borderRadius: 8,
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    background: isIzin ? '#d97706' : 'var(--bg-subtle)',
+                                    color: isIzin ? '#fff' : 'var(--text-secondary)',
+                                    textAlign: 'center',
+                                  }}
+                                >
+                                  Izin
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setStudentStatus(item.userId, 'sakit')}
+                                  style={{
+                                    padding: '8px 4px',
+                                    borderRadius: 8,
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    background: isSakit ? '#0284c7' : 'var(--bg-subtle)',
+                                    color: isSakit ? '#fff' : 'var(--text-secondary)',
+                                    textAlign: 'center',
+                                  }}
+                                >
+                                  Sakit
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setStudentStatus(item.userId, 'alpa')}
+                                  style={{
+                                    padding: '8px 4px',
+                                    borderRadius: 8,
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    background: isAlpa ? '#dc2626' : 'var(--bg-subtle)',
+                                    color: isAlpa ? '#fff' : 'var(--text-secondary)',
+                                    textAlign: 'center',
+                                  }}
+                                >
+                                  Alpa
+                                </button>
+                              </div>
+
+                              <input
+                                className="input"
+                                placeholder="Catatan khusus..."
+                                style={{ height: 32, fontSize: 11, width: '100%' }}
+                                value={item.keterangan || ''}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setRosterData(prev =>
+                                    prev.map(x => (x.userId === item.userId ? { ...x, keterangan: val } : x))
+                                  );
+                                }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Bottom Save Reminder Bar */}
+                    <div
+                      style={{
+                        marginTop: 20,
+                        padding: '14px 18px',
+                        background: 'var(--bg-subtle)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 14,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: 12,
+                      }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                        Selesai mengecek presensi? Simpan rekaman kehadiran:
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleSaveRoster}
+                        disabled={savingRoster || !rosterData.length}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, padding: '10px 22px', borderRadius: 10 }}
+                      >
+                        <MdSave /> {savingRoster ? 'Menyimpan...' : 'Simpan Presensi Pertemuan'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           {/* TAB 3: KOTAK MASUK PERIZINAN MAHASISWA */}
           {tab === 'leave' && (

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import ThemeToggle from '../components/ThemeToggle';
+import PanoramicCurvedCarousel from '../components/PanoramicCurvedCarousel';
 import {
   FiCreditCard, FiCheckCircle, FiArrowUpRight,
   FiBookOpen, FiAward, FiCode, FiCompass,
@@ -154,6 +155,7 @@ export default function LandingPage() {
   const [ukms, setUkms] = useState(defaultUkmList);
   const [selectedUkm, setSelectedUkm] = useState(null);
   const [detailTab, setDetailTab] = useState('keunggulan'); // 'keunggulan' | 'capaian' | 'info'
+  const [publicEvents, setPublicEvents] = useState([]);
 
   useEffect(() => {
     const handleScroll = () => setHeaderScrolled(window.scrollY > 20);
@@ -178,6 +180,13 @@ export default function LandingPage() {
               highlights: remote.highlights || def.highlights,
               activitySchedule: remote.activitySchedule || def.activitySchedule,
               requirements: remote.requirements || def.requirements,
+              registrationOpen: remote.registrationOpen,
+              registrationOpenDate: remote.registrationOpenDate,
+              registrationCloseDate: remote.registrationCloseDate,
+              matriculationDate: remote.matriculationDate,
+              matriculationTime: remote.matriculationTime,
+              matriculationLocation: remote.matriculationLocation,
+              matriculationNotes: remote.matriculationNotes,
               memberCount: remote.members ? `${remote.members.length}+` : def.memberCount,
               achievements: remote.achievements || [],
             };
@@ -188,6 +197,12 @@ export default function LandingPage() {
       .catch(err => {
         console.warn('Menggunakan data UKM lokal:', err.message);
       });
+
+    api.get('/events/public')
+      .then(res => {
+        if (res.data) setPublicEvents(res.data);
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -200,38 +215,9 @@ export default function LandingPage() {
       }}
     >
       {/* ── Navbar ────────────────────────────── */}
-      <header
-        style={{
-          position: 'sticky',
-          top: 16,
-          zIndex: 90,
-          margin: '0 24px',
-          background: headerScrolled ? 'rgba(255, 255, 255, 0.95)' : '#ffffff',
-          backdropFilter: 'blur(12px)',
-          borderRadius: 999,
-          padding: '10px 24px',
-          boxShadow: '0 10px 30px -10px rgba(15, 23, 42, 0.08)',
-          border: '1px solid rgba(0, 0, 0, 0.06)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          transition: 'all 0.3s ease',
-        }}
-      >
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: '#09090b' }}>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              overflow: 'hidden',
-              boxShadow: '0 4px 12px rgba(10, 37, 64, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
+      <header className={`landing-header-pill${headerScrolled ? ' scrolled' : ''}`}>
+        <Link to="/" className="landing-brand-link">
+          <div className="landing-logo-box">
             <img
               src="/simkas-logo.png"
               alt="Logo SIMKAS"
@@ -243,44 +229,21 @@ export default function LandingPage() {
               }}
             />
           </div>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 900, letterSpacing: -0.5, lineHeight: 1.1 }}>SIMKAS</div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', letterSpacing: 0.5 }}>STMIK LOMBOK</div>
+          <div className="landing-brand-text">
+            <div className="brand-title">SIMKAS</div>
+            <div className="brand-sub">STMIK LOMBOK</div>
           </div>
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="landing-nav-actions">
           <ThemeToggle variant="icon" />
-          <Link
-            to="/login"
-            style={{
-              textDecoration: 'none',
-              color: '#09090b',
-              fontSize: 13,
-              fontWeight: 700,
-              padding: '8px 16px',
-              borderRadius: 999,
-            }}
-          >
+          <Link to="/login" className="landing-login-link">
             Masuk
           </Link>
-          <Link
-            to="/register"
-            style={{
-              textDecoration: 'none',
-              background: '#09090b',
-              color: '#ffffff',
-              fontSize: 13,
-              fontWeight: 800,
-              padding: '10px 22px',
-              borderRadius: 999,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <span>Daftar Sekarang</span>
-            <FiArrowUpRight style={{ fontSize: 15 }} />
+          <Link to="/register" className="landing-register-link">
+            <span className="register-text-desktop">Daftar Sekarang</span>
+            <span className="register-text-mobile">Daftar</span>
+            <FiArrowUpRight style={{ fontSize: 14 }} />
           </Link>
         </div>
       </header>
@@ -430,6 +393,9 @@ export default function LandingPage() {
         </section>
       </ScrollRevealItem>
 
+      {/* ── 3D Panoramic Curved Activities Showcase (Persis Referensi Gambar) ── */}
+      <PanoramicCurvedCarousel />
+
       {/* ── 4 UKM Cards ──────────────────────── */}
       <section style={{ maxWidth: 1200, margin: '0 auto 60px', padding: '0 24px' }}>
         <ScrollRevealItem>
@@ -485,21 +451,51 @@ export default function LandingPage() {
                       }}>
                         {u.icon}
                       </div>
-                      <span style={{
-                        background: u.badgeBg, color: u.badgeColor,
-                        fontSize: 11, fontWeight: 800, padding: '4px 10px',
-                        borderRadius: 999
-                      }}>
-                        {u.tag}
-                      </span>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <span style={{
+                          background: u.registrationOpen ? '#dcfce7' : '#f1f5f9',
+                          color: u.registrationOpen ? '#15803d' : '#64748b',
+                          fontSize: 10.5, fontWeight: 800, padding: '3px 8px',
+                          borderRadius: 999
+                        }}>
+                          {u.registrationOpen ? '🟢 Buka' : '⚪ Tutup'}
+                        </span>
+                        <span style={{
+                          background: u.badgeBg, color: u.badgeColor,
+                          fontSize: 11, fontWeight: 800, padding: '4px 10px',
+                          borderRadius: 999
+                        }}>
+                          {u.tag}
+                        </span>
+                      </div>
                     </div>
 
                     <h3 style={{ fontSize: 19, fontWeight: 800, margin: '0 0 6px', color: '#09090b', letterSpacing: -0.3 }}>
                       {u.name}
                     </h3>
-                    <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5, margin: '0 0 14px' }}>
+                    <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5, margin: '0 0 12px' }}>
                       {u.desc}
                     </p>
+
+                    {/* Jadwal Matrikulasi Dinamis Khusus UKM ini */}
+                    {u.matriculationDate && (
+                      <div style={{
+                        background: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: 12,
+                        padding: '6px 10px',
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        color: '#1d4ed8',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        marginBottom: 14,
+                      }}>
+                        <span>🗓️</span>
+                        <span>Matrikulasi: {new Date(u.matriculationDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })} ({u.matriculationTime || '09:00 WITA'})</span>
+                      </div>
+                    )}
 
                     {/* Highlight Capaian / Prestasi */}
                     {topHighlight && (
@@ -617,6 +613,133 @@ export default function LandingPage() {
           })}
         </div>
       </section>
+
+      {/* ── Public Events & Agenda Kegiatan UKM ─────────────────── */}
+      {publicEvents.length > 0 && (
+        <section style={{ maxWidth: 1200, margin: '0 auto 64px', padding: '0 24px' }}>
+          <ScrollRevealItem>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#2563eb', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  AGENDA & EVENT KAMPUS
+                </span>
+                <h2 style={{ fontSize: 28, fontWeight: 900, color: '#09090b', margin: '6px 0 0', letterSpacing: -0.5 }}>
+                  Event & Aktivitas Terbuka UKM STMIK Lombok
+                </h2>
+                <p style={{ fontSize: 14, color: '#64748b', margin: '6px 0 0', maxWidth: 620 }}>
+                  Ikuti seminar, workshop teknologi, pentas seni, turnamen olahraga, serta orientasi gelombang pendaftaran baru.
+                </p>
+              </div>
+
+              <Link
+                to="/register"
+                style={{
+                  borderRadius: 999,
+                  background: '#09090b',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  textDecoration: 'none',
+                  padding: '10px 22px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                <FiCalendar /> Gabung & Ikuti Event
+              </Link>
+            </div>
+          </ScrollRevealItem>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 18 }}>
+            {publicEvents.map((ev, i) => {
+              const evDate = new Date(ev.startTime);
+              return (
+                <ScrollRevealItem key={ev.id} delay={`stagger-delay-${(i % 4) + 1}`} style={{ height: '100%' }}>
+                  <div
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: 22,
+                      padding: '22px',
+                      border: '1px solid rgba(0,0,0,0.06)',
+                      boxShadow: '0 6px 16px rgba(0,0,0,0.02)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      height: '100%',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 800,
+                            padding: '3px 10px',
+                            borderRadius: 999,
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                          }}
+                        >
+                          {ev.ukm?.name || 'UKM STMIK Lombok'}
+                        </span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#15803d' }}>
+                          🌐 Event Publik
+                        </span>
+                      </div>
+
+                      <h3 style={{ fontSize: 16, fontWeight: 900, color: '#09090b', margin: '4px 0 8px', lineHeight: 1.4 }}>
+                        {ev.title}
+                      </h3>
+                      <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.5, margin: '0 0 16px' }}>
+                        {ev.description || 'Kegiatan resmi diselenggarakan oleh pengelola UKM.'}
+                      </p>
+                    </div>
+
+                    <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, color: '#475569', marginBottom: 14 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <FiClock style={{ color: '#2563eb', fontSize: 14 }} />
+                          <span>
+                            {evDate.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} • {evDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WITA
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span>📍</span>
+                          <span>{ev.location || 'Kampus STMIK Lombok'}</span>
+                        </div>
+                      </div>
+
+                      <Link
+                        to={`/register?ukm=${ev.ukmId}`}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          width: '100%',
+                          padding: '9px 14px',
+                          borderRadius: 12,
+                          background: '#f8fafc',
+                          color: '#09090b',
+                          border: '1px solid #e2e8f0',
+                          textDecoration: 'none',
+                          fontSize: 12.5,
+                          fontWeight: 700,
+                        }}
+                      >
+                        <span>Daftar {ev.ukm?.name}</span>
+                        <FiArrowRight style={{ fontSize: 13 }} />
+                      </Link>
+                    </div>
+                  </div>
+                </ScrollRevealItem>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ── Features Section ─────────────────── */}
       <section style={{ maxWidth: 1200, margin: '0 auto 60px', padding: '0 24px' }}>
@@ -1046,6 +1169,7 @@ export default function LandingPage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

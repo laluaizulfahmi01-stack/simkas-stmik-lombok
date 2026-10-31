@@ -36,15 +36,23 @@ const adminNav = [
 ];
 
 export default function Sidebar() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user, promptLogout } = useAuth();
+
+  // Filter student nav items based on membership status:
+  // If student has NOT been accepted yet (no active UKMs), hide Kas and Absensi
+  const isAcceptedMember = Boolean(user?.ukms && user.ukms.length > 0);
+  const filteredStudentNav = studentNav.filter(item => {
+    if (!isAcceptedMember && (item.to === '/student/kas' || item.to === '/student/absen')) {
+      return false;
+    }
+    return true;
+  });
 
   const navItems =
     user?.role === 'superadmin' ? adminNav :
     user?.role === 'manager'    ? managerNav :
-                                  studentNav;
+                                  filteredStudentNav;
 
-  const handleLogout = () => { logout(); navigate('/login'); };
   const initials = user?.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
 
   return (
@@ -109,7 +117,7 @@ export default function Sidebar() {
           <div className="sidebar-pro-sub">
             Akses penuh seluruh transparansi kas & kegiatan resmi UKM
           </div>
-          <button className="sidebar-pro-btn" onClick={handleLogout}>
+          <button className="sidebar-pro-btn" onClick={promptLogout}>
             <FiLogOut style={{ marginRight: 4 }} /> Keluar Akun
           </button>
         </div>

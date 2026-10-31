@@ -58,6 +58,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
     const {
       name, managerId, description, history, vision, mission,
       registrationOpen, registrationOpenDate, registrationCloseDate,
+      matriculationDate, matriculationTime, matriculationLocation, matriculationNotes,
+      matriculationSchedule,
       tag, advantages, highlights, activitySchedule, requirements
     } = req.body;
     const updates = {};
@@ -68,6 +70,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
     if (registrationOpen !== undefined) updates.registrationOpen = registrationOpen;
     if (registrationOpenDate !== undefined) updates.registrationOpenDate = registrationOpenDate;
     if (registrationCloseDate !== undefined) updates.registrationCloseDate = registrationCloseDate;
+    if (matriculationDate !== undefined) updates.matriculationDate = matriculationDate;
+    if (matriculationTime !== undefined) updates.matriculationTime = matriculationTime;
+    if (matriculationLocation !== undefined) updates.matriculationLocation = matriculationLocation;
+    if (matriculationNotes !== undefined) updates.matriculationNotes = matriculationNotes;
+    if (matriculationSchedule !== undefined) {
+      updates.matriculationSchedule = typeof matriculationSchedule === 'string'
+        ? matriculationSchedule
+        : JSON.stringify(matriculationSchedule);
+    }
     if (tag !== undefined) updates.tag = tag;
     if (advantages !== undefined) updates.advantages = advantages;
     if (highlights !== undefined) updates.highlights = highlights;
@@ -133,10 +144,26 @@ router.get('/:id/members', authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/ukm/:id/stats  –  summary stats for a single UKM
+// GET /api/ukm/:id/stats  –  summary stats for a single UKM (Strictly isolated by UKM role)
 router.get('/:id/stats', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    const ukm = await Ukm.findByPk(id);
+    if (!ukm) return res.status(404).json({ message: 'UKM tidak ditemukan' });
+
+    // Permissions: superadmin can see all, manager only their managed UKM, student only active UKMs
+    const isSuperAdmin = req.user.role === 'superadmin';
+    const isUkmManager = req.user.role === 'manager' && Number(ukm.managerId) === Number(req.user.id);
+    let isMember = false;
+    if (req.user.role === 'student') {
+      const membership = await UserUkm.findOne({ where: { userId: req.user.id, ukmId: id, membershipStatus: 'aktif' } });
+      isMember = Boolean(membership);
+    }
+
+    if (!isSuperAdmin && !isUkmManager && !isMember) {
+      return res.status(403).json({ message: 'Akses ditolak: Anda tidak memiliki wewenang melihat data kas UKM ini' });
+    }
+
     const [transactions, memberCount, attendanceCount] = await Promise.all([
       Transaction.findAll({ where: { ukmId: id, isCancelled: false } }),
       UserUkm.count({ where: { ukmId: id, membershipStatus: 'aktif' } }),
@@ -145,7 +172,10 @@ router.get('/:id/stats', authenticateToken, async (req, res) => {
     const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + +t.amount, 0);
     const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + +t.amount, 0);
     res.json({ totalIncome, totalExpense, balance: totalIncome - totalExpense, memberCount, attendanceCount });
-  } catch (e) { res.status(500).json({ message: 'Server error' }); }
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // PUT /api/ukm/:id/registration-schedule  –  Pengelola / Super Admin atur jadwal pendaftaran

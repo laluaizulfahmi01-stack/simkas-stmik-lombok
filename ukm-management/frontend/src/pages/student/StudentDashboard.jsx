@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 import Sidebar from '../../components/Sidebar';
+import NotificationModal from '../../components/NotificationModal';
+import EventBannerCarousel from '../../components/EventBannerCarousel';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -23,21 +25,30 @@ export default function StudentDashboard() {
   const [achievements, setAchievements] = useState([]);
   const [myApps, setMyApps] = useState([]);
   const [availableUkms, setAvailableUkms] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notifModalOpen, setNotifModalOpen] = useState(false);
 
   const refreshData = async () => {
     setIsRefreshing(true);
     try {
-      const [profRes, appsRes] = await Promise.all([
+      const [profRes, appsRes, pubEvRes] = await Promise.all([
         api.get('/profile').catch(() => null),
         api.get('/applications/my').catch(() => ({ data: [] })),
+        api.get('/events/public').catch(() => ({ data: [] })),
       ]);
       if (profRes?.data && updateUser) {
         updateUser(profRes.data);
+        if (profRes.data.ukms?.length > 0) {
+          setActiveUkmId(profRes.data.ukms[0].id);
+        }
       }
       if (appsRes?.data) {
         setMyApps(appsRes.data);
+      }
+      if (pubEvRes?.data && pubEvRes.data.length > 0) {
+        setEvents(pubEvRes.data);
       }
     } finally {
       setTimeout(() => setIsRefreshing(false), 400);
@@ -63,12 +74,21 @@ export default function StudentDashboard() {
         api.get(`/transactions/${idToUse}`),
         api.get(`/ukm/${idToUse}/achievements`),
         api.get('/applications/my').catch(() => ({ data: [] })),
+        api.get(`/events/${idToUse}`).catch(() => ({ data: [] })),
+        api.get('/events/public').catch(() => ({ data: [] })),
       ])
-        .then(([statsRes, txRes, achRes, appsRes]) => {
+        .then(([statsRes, txRes, achRes, appsRes, evRes, pubEvRes]) => {
           setStats(statsRes.data);
           setRecent(txRes.data.slice(0, 5));
           setAchievements(achRes.data.slice(0, 3));
           setMyApps(appsRes.data);
+          const ukmEvs = evRes.data || [];
+          const pubEvs = pubEvRes?.data || [];
+          const merged = [...ukmEvs];
+          pubEvs.forEach(pe => {
+            if (!merged.some(e => e.id === pe.id)) merged.push(pe);
+          });
+          setEvents(merged.length > 0 ? merged : pubEvs);
         })
         .catch(() => {})
         .finally(() => setLoading(false));
@@ -77,10 +97,12 @@ export default function StudentDashboard() {
       Promise.all([
         api.get('/ukm'),
         api.get('/applications/my').catch(() => ({ data: [] })),
+        api.get('/events/public').catch(() => ({ data: [] })),
       ])
-        .then(([ukmRes, appsRes]) => {
+        .then(([ukmRes, appsRes, evRes]) => {
           setAvailableUkms(ukmRes.data);
           setMyApps(appsRes.data);
+          setEvents(evRes?.data || []);
         })
         .catch(() => {})
         .finally(() => setLoading(false));
@@ -119,7 +141,17 @@ export default function StudentDashboard() {
           <div className="influency-header-left">
             <div className="influency-title-row">
               <h1 className="influency-page-title">Beranda Mahasiswa</h1>
-              <span className="influency-pill-badge">{ukms.length} UKM Diikuti</span>
+              <span
+                className="influency-pill-badge"
+                style={{
+                  background: ukms.length ? 'rgba(34, 197, 94, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                  borderColor: ukms.length ? 'rgba(34, 197, 94, 0.3)' : 'rgba(245, 158, 11, 0.3)',
+                  color: 'var(--text-primary)',
+                  fontWeight: 800,
+                }}
+              >
+                {ukms.length === 0 ? '⏳ Calon Anggota (Menunggu Seleksi)' : `${ukms.length} UKM Diikuti`}
+              </span>
             </div>
             <p className="influency-page-sub">
               NIM: <strong>{user?.nim}</strong> &bull; {user?.prodi || 'Sistem Informasi'} &bull; STMIK Lombok
@@ -138,7 +170,12 @@ export default function StudentDashboard() {
             <div className="influency-circle-btn" title="Cari Data">
               <FiSearch />
             </div>
-            <div className="influency-circle-btn" title="Notifikasi">
+            <div
+              className="influency-circle-btn"
+              title="Pusat Notifikasi SIMKAS"
+              onClick={() => setNotifModalOpen(true)}
+              style={{ cursor: 'pointer', position: 'relative' }}
+            >
               <FiBell />
               <span className="influency-bell-dot" />
             </div>
@@ -168,6 +205,15 @@ export default function StudentDashboard() {
              ========================================================================= */}
           {ukms.length === 0 ? (
             <div>
+              {/* Event & Agenda Banner Carousel (Auto-rotating every 5 seconds) */}
+              {events.length > 0 && (
+                <EventBannerCarousel
+                  events={events}
+                  activeUkmName="Agenda Kampus STMIK Lombok"
+                  autoIntervalMs={5000}
+                />
+              )}
+
               {myApps && myApps.length > 0 ? (
                 /* ════ Menunggu Persetujuan Pengelola UKM Hero Section ════ */
                 <div style={{ marginBottom: 24 }}>
@@ -340,6 +386,164 @@ export default function StudentDashboard() {
                       );
                     })}
                   </div>
+
+                  {/* ════ Jadwal Matrikulasi, Seleksi & Syarat Kelulusan (Dynamic per UKM) ════ */}
+                  {myApps.map((app, appIdx) => {
+                    const u = app.ukm;
+                    let schedRows = [];
+                    if (u?.matriculationSchedule) {
+                      if (Array.isArray(u.matriculationSchedule)) {
+                        schedRows = u.matriculationSchedule;
+                      } else {
+                        try { schedRows = JSON.parse(u.matriculationSchedule); } catch { schedRows = []; }
+                      }
+                    }
+                    const isOpen = Boolean(u?.registrationOpen);
+                    const openCloseStr = isOpen
+                      ? (u?.registrationCloseDate ? `Pendaftaran Dibuka s/d ${new Date(u.registrationCloseDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'Pendaftaran Dibuka (Aktif)')
+                      : 'Pendaftaran Ditutup';
+                    const notes = u?.matriculationNotes || 'Hadir tepat waktu, membawa KTM fisik atau surat aktif kampus, dan berpakaian rapi mengenakan jas almamater.';
+
+                    return (
+                      <div
+                        key={app.id || appIdx}
+                        className="card"
+                        style={{
+                          borderRadius: 24,
+                          padding: '24px 26px',
+                          marginBottom: 24,
+                          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                          border: '1.5px solid #cbd5e1',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
+                        }}
+                      >
+                        {/* Header Bar */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                              <FiCalendar />
+                            </div>
+                            <div>
+                              <h3 style={{ fontSize: 18, fontWeight: 900, margin: 0, color: 'var(--text-primary)' }}>
+                                Jadwal & Rundown Matrikulasi Calon Anggota: {u?.name || 'UKM STMIK Lombok'}
+                              </h3>
+                              <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '3px 0 0' }}>
+                                Status Pendaftaran: <strong>{openCloseStr}</strong> • Ditentukan oleh Pengelola {u?.name}
+                              </p>
+                            </div>
+                          </div>
+
+                          <span
+                            style={{
+                              fontSize: 12,
+                              padding: '6px 16px',
+                              borderRadius: 999,
+                              fontWeight: 800,
+                              background: isOpen ? '#dcfce7' : '#fee2e2',
+                              color: isOpen ? '#15803d' : '#991b1b',
+                            }}
+                          >
+                            {isOpen ? '📢 Gelombang Seleksi Aktif' : '⚪ Pendaftaran Ditutup'}
+                          </span>
+                        </div>
+
+                        {/* TABEL JADWAL MATRIKULASI (Bisa Seminggu Penuh / Multi-Hari) */}
+                        <div style={{ marginBottom: 18 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>
+                              📋 Rundown Sesi Matrikulasi ({schedRows.length > 0 ? `${schedRows.length} Hari Terjadwal` : 'Menunggu Jadwal Lengkap'})
+                            </span>
+                            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                              Wajib diikuti minimal 80% kehadiran
+                            </span>
+                          </div>
+
+                          {schedRows.length > 0 ? (
+                            <div className="table-wrap" style={{ borderRadius: 14, border: '1.5px solid #e2e8f0', overflowX: 'auto', background: '#ffffff' }}>
+                              <table style={{ width: '100%', minWidth: 780, borderCollapse: 'collapse', textAlign: 'left' }}>
+                                <thead>
+                                  <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0' }}>
+                                    <th style={{ padding: '12px 14px', fontSize: 12, fontWeight: 800, color: '#475569', width: 100 }}>Hari</th>
+                                    <th style={{ padding: '12px 14px', fontSize: 12, fontWeight: 800, color: '#475569', width: 140 }}>Tanggal</th>
+                                    <th style={{ padding: '12px 14px', fontSize: 12, fontWeight: 800, color: '#475569', width: 150 }}>Waktu / Jam</th>
+                                    <th style={{ padding: '12px 14px', fontSize: 12, fontWeight: 800, color: '#475569' }}>Materi & Agenda Sesi</th>
+                                    <th style={{ padding: '12px 14px', fontSize: 12, fontWeight: 800, color: '#475569', width: 170 }}>Lokasi / Lab</th>
+                                    <th style={{ padding: '12px 14px', fontSize: 12, fontWeight: 800, color: '#475569', width: 150 }}>Pemateri / PJ</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {schedRows.map((row, rIdx) => {
+                                    const rowDateStr = row.date
+                                      ? new Date(row.date).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
+                                      : '-';
+                                    return (
+                                      <tr
+                                        key={rIdx}
+                                        style={{
+                                          borderBottom: rIdx === schedRows.length - 1 ? 'none' : '1px solid #f1f5f9',
+                                          background: rIdx % 2 === 0 ? '#ffffff' : '#fafafa',
+                                        }}
+                                      >
+                                        <td style={{ padding: '11px 14px' }}>
+                                          <span
+                                            style={{
+                                              display: 'inline-block',
+                                              padding: '4px 10px',
+                                              borderRadius: 8,
+                                              background: '#eff6ff',
+                                              color: '#1d4ed8',
+                                              fontWeight: 800,
+                                              fontSize: 11.5,
+                                            }}
+                                          >
+                                            {row.day || `Hari ${rIdx + 1}`}
+                                          </span>
+                                        </td>
+                                        <td style={{ padding: '11px 14px', fontSize: 12.5, fontWeight: 700, color: '#1e293b' }}>
+                                          {rowDateStr}
+                                        </td>
+                                        <td style={{ padding: '11px 14px', fontSize: 12.5, color: '#475569' }}>
+                                          {row.time || '09:00 - 12:00 WITA'}
+                                        </td>
+                                        <td style={{ padding: '11px 14px', fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
+                                          {row.agenda || '-'}
+                                        </td>
+                                        <td style={{ padding: '11px 14px', fontSize: 12.5, color: '#475569' }}>
+                                          📍 {row.location || 'Kampus STMIK'}
+                                        </td>
+                                        <td style={{ padding: '11px 14px', fontSize: 12.5, color: '#2563eb', fontWeight: 600 }}>
+                                          {row.instructor || '-'}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div style={{ background: '#f8fafc', padding: '18px', borderRadius: 14, border: '1px solid #e2e8f0', textAlign: 'center', color: '#64748b' }}>
+                              <p style={{ margin: 0, fontSize: 13 }}>
+                                Jadwal rincian tabel matrikulasi sedang dirumuskan oleh pengelola {u?.name}. Pantau berkala di halaman ini.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Syarat & Catatan Kelulusan */}
+                        <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 14, padding: '14px 18px' }}>
+                          <div style={{ fontWeight: 800, fontSize: 13, color: '#1e3a8a', marginBottom: 6 }}>
+                            📌 Syarat & Catatan Khusus Pengelola {u?.name}:
+                          </div>
+                          <p style={{ margin: 0, fontSize: 12.5, color: '#334155', lineHeight: 1.6 }}>
+                            {notes}
+                          </p>
+                          <div style={{ marginTop: 10, fontSize: 12, color: '#2563eb', fontWeight: 700 }}>
+                            *Setelah dinyatakan diterima oleh pengelola UKM, akun Anda otomatis aktif sebagai Anggota Penuh dan menu Transparansi Kas serta Presensi akan terbuka.
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 /* Hero Lime Onboarding Banner when 0 applications */
@@ -599,6 +803,15 @@ export default function StudentDashboard() {
                   </Link>
                 </div>
               </div>
+
+              {/* Event & Agenda Banner Carousel (Auto-rotating every 5 seconds) */}
+              {events.length > 0 && (
+                <EventBannerCarousel
+                  events={events}
+                  activeUkmName={activeUkm?.name}
+                  autoIntervalMs={5000}
+                />
+              )}
 
               {/* ════ 4 Stat Cards Row (INFLUENCY Matching) ════ */}
               <div className="influency-grid-4">
@@ -956,11 +1169,108 @@ export default function StudentDashboard() {
                   </div>
                 )}
               </div>
+
+              {/* ════ Agenda & Event Kegiatan UKM ({activeUkm?.name}) ════ */}
+              <div className="card" style={{ borderRadius: 24, padding: 24, marginTop: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <FiCalendar style={{ color: 'var(--primary)', fontSize: 20 }} />
+                      <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                        Agenda & Event Kegiatan ({activeUkm?.name})
+                      </h3>
+                    </div>
+                    <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '4px 0 0' }}>
+                      Jadwal workshop, latihan rutin, pertemuan, dan kegiatan resmi UKM
+                    </p>
+                  </div>
+                  <span className="badge badge-blue" style={{ fontSize: 12, padding: '4px 12px', borderRadius: 999, fontWeight: 700 }}>
+                    {events.length} Agenda Terjadwal
+                  </span>
+                </div>
+
+                {events.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '30px 16px', color: 'var(--text-muted)' }}>
+                    <p>Belum ada agenda kegiatan yang dijadwalkan untuk {activeUkm?.name}.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+                    {events.map(ev => {
+                      const evDate = new Date(ev.startTime);
+                      return (
+                        <div
+                          key={ev.id}
+                          style={{
+                            background: 'var(--bg-subtle, #f8fafc)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 18,
+                            padding: '18px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  padding: '3px 8px',
+                                  borderRadius: 999,
+                                  background: ev.visibility === 'publik' ? '#eff6ff' : '#f5f3ff',
+                                  color: ev.visibility === 'publik' ? '#1d4ed8' : '#6d28d9',
+                                }}
+                              >
+                                {ev.visibility === 'publik' ? '🌐 Event Terbuka / Publik' : '🔒 Internal Anggota'}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 700,
+                                  color: ev.status === 'terlaksana' ? '#16a34a' : '#d97706',
+                                }}
+                              >
+                                {ev.status === 'terlaksana' ? '✓ Selesai' : '⏳ Direncanakan'}
+                              </span>
+                            </div>
+                            <h4 style={{ fontSize: 15, fontWeight: 800, margin: '4px 0 6px', color: 'var(--text-primary)' }}>
+                              {ev.title}
+                            </h4>
+                            <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 12px' }}>
+                              {ev.description || 'Kegiatan resmi diselenggarakan oleh pengelola UKM.'}
+                            </p>
+                          </div>
+
+                          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, fontSize: 12, color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <FiClock style={{ fontSize: 13, color: 'var(--primary)' }} />
+                              <span>
+                                {evDate.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} • {evDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WITA
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 13 }}>📍</span>
+                              <span>{ev.location || 'Kampus STMIK Lombok'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </>
           )}
 
         </div>
       </div>
+
+      {/* Pusat Notifikasi Interaktif Multi-Device */}
+      <NotificationModal
+        isOpen={notifModalOpen}
+        onClose={() => setNotifModalOpen(false)}
+      />
     </div>
   );
 }

@@ -108,8 +108,8 @@ Setiap UKM mengelola anggota, kas, agenda, absensi, dan dokumentasinya sendiri-s
 - **FR-UKM-05 (M)**: Profil UKM (nama, deskripsi, kontak, logo) dapat dikelola.
 
 ### 6.3 Pendaftaran dan Seleksi (PND)
-- **FR-PND-01 (M)**: Pengelola menetapkan jadwal pendaftaran (tanggal buka dan tutup) untuk UKM-nya. Super Admin dapat mengubahnya [K].
-- **FR-PND-02 (M)**: Mahasiswa mengajukan pendaftaran hanya dalam jadwal terbuka.
+- **FR-PND-01 (M)**: Pengelola menetapkan jadwal pendaftaran (tanggal buka dan tutup) untuk UKM-nya. **Pendaftaran UKM dilaksanakan 1 kali per tahun pada setiap Tahun Ajaran Baru.** Super Admin dapat mengubahnya [K].
+- **FR-PND-02 (M)**: Mahasiswa mengajukan pendaftaran hanya dalam jadwal gelombang tahun ajaran baru yang sedang dibuka.
 - **FR-PND-03 (M)**: **Sistem menolak pendaftaran jika mahasiswa sudah memiliki 2 pendaftaran berstatus diajukan, dalam seleksi, atau diterima [K].**
 - **FR-PND-04 (M)**: Status pendaftaran: `diajukan`, `dalam_seleksi`, `diterima`, `ditolak`, `dibatalkan`. Pengelola dapat memberi catatan. Detail seleksi dilakukan di luar sistem [K].
 - **FR-PND-05 (M)**: Mahasiswa dapat membatalkan pendaftarannya sendiri.

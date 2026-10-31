@@ -1,5 +1,6 @@
 // src/pages/student/AbsenPage.jsx - Rekap Absen Bulanan & Check-In Mandiri & Pengajuan Izin
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../../components/Sidebar';
 import ProPageHeader from '../../components/ProPageHeader';
@@ -148,24 +149,17 @@ export default function StudentAbsenPage() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <ProPageHeader
           title="Presensi & Rekap Kehadiran"
-          subtitle={`Check-in mandiri, status izin & riwayat kehadiran pada ${activeUkm?.name || 'UKM STMIK Lombok'}`}
-          pillBadge="Presensi Digital"
+          subtitle={`Presensi dicatat per pertemuan oleh pengelola ${activeUkm?.name || 'UKM STMIK Lombok'}`}
+          pillBadge="Presensi Pertemuan"
           pillColor="indigo"
           actions={
             <div style={{ display: 'flex', gap: 10 }}>
               <button
-                className="btn btn-ghost btn-sm"
+                className="btn btn-primary btn-sm"
                 onClick={() => setLeaveModal(true)}
-                style={{ borderRadius: 12, padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 6 }}
+                style={{ borderRadius: 12, padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
               >
                 <MdMail /> Ajukan Izin
-              </button>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => setCheckInModal(true)}
-                style={{ borderRadius: 12, padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
-              >
-                <MdQrCode style={{ fontSize: 18 }} /> Check-In Mandiri
               </button>
             </div>
           }
@@ -188,7 +182,65 @@ export default function StudentAbsenPage() {
         />
 
         <div className="main-content">
-          {/* Banner Informasi & Fast Check-In Action */}
+          {!ukms.length ? (
+            <div
+              className="card"
+              style={{
+                textAlign: 'center',
+                padding: '48px 24px',
+                maxWidth: 620,
+                margin: '40px auto',
+                borderRadius: 24,
+                boxShadow: '0 12px 36px rgba(0,0,0,0.06)',
+              }}
+            >
+              <div
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: '50%',
+                  background: 'rgba(245, 158, 11, 0.1)',
+                  color: '#d97706',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 34,
+                  margin: '0 auto 18px',
+                }}
+              >
+                📋
+              </div>
+
+              <h2 style={{ fontSize: 20, fontWeight: 900, marginBottom: 8, color: 'var(--text-primary)' }}>
+                Presensi Dibuka Setelah Diterima
+              </h2>
+
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 24 }}>
+                Fitur absensi dan rekap kehadiran kegiatan UKM hanya dapat diakses oleh mahasiswa yang telah <strong>resmi diterima</strong> menjadi anggota UKM.
+                <br /><br />
+                Status akun Anda saat ini sedang dalam <strong>tahap seleksi / matrikulasi</strong>. Silakan pantau perkembangan pengumuman di dashboard akun Anda.
+              </p>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <Link
+                  to="/student"
+                  className="btn btn-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, fontWeight: 700 }}
+                >
+                  Pantau Status Seleksi & Matrikulasi →
+                </Link>
+                <Link
+                  to="/student/pendaftaran"
+                  className="btn btn-ghost"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 20px', borderRadius: 12, fontWeight: 700 }}
+                >
+                  Detail Pengajuan UKM
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Banner Informasi & Fast Check-In Action */}
           <div
             className="card"
             style={{
@@ -204,20 +256,17 @@ export default function StudentAbsenPage() {
                   📢 PRESENSI DIGITAL {activeUkm?.name}
                 </span>
                 <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text-primary)', marginTop: 4 }}>
-                  Check-In Sesi Kegiatan UKM Hari Ini
+                  Sistem Presensi Ceklis per Pertemuan
                 </h3>
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 640, marginTop: 4, lineHeight: 1.5 }}>
-                  Masukkan Kode Token yang dibagikan pengurus di layar proyektor / lab untuk mencatat kehadiran Anda.
-                  Jika berhalangan hadir karena sakit atau ada tugas, ajukan izin dengan melampirkan bukti surat.
+                  Kehadiran anggota UKM dicatat dan diceklis secara langsung oleh Pengelola UKM pada setiap sesi kegiatan berlangsung.
+                  Jika Anda berhalangan hadir (sakit atau izin keperluan penting), silakan ajukan surat izin resmi melalui tombol di samping.
                 </p>
               </div>
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <button className="btn btn-ghost" onClick={() => setLeaveModal(true)}>
-                  <MdMail /> Ajukan Izin
-                </button>
-                <button className="btn btn-primary" onClick={() => setCheckInModal(true)}>
-                  <MdQrCode /> Check-In Presensi
+                <button className="btn btn-primary" onClick={() => setLeaveModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
+                  <MdMail /> Ajukan Surat Izin
                 </button>
               </div>
             </div>
@@ -326,14 +375,14 @@ export default function StudentAbsenPage() {
           <div className="card" style={{ marginBottom: 24 }}>
             <div className="flex justify-between items-center" style={{ marginBottom: 18 }}>
               <div>
-                <h3 style={{ fontSize: 16, fontWeight: 800 }}>Daftar Pertemuan & Status Kehadiran Real-Time</h3>
+                <h3 style={{ fontSize: 16, fontWeight: 800 }}>Daftar Pertemuan & Rekap Kehadiran Anggota</h3>
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                  Total {data?.totalMeetings || 0} sesi pertemuan terdaftar pada UKM {activeUkm?.name}
+                  Total {data?.totalMeetings || 0} sesi pertemuan resmi tercatat pada UKM {activeUkm?.name}
                 </p>
               </div>
 
-              <button className="btn btn-primary btn-sm" onClick={() => setCheckInModal(true)}>
-                <MdQrCode /> Check-In Sekarang
+              <button className="btn btn-primary btn-sm" onClick={() => setLeaveModal(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600 }}>
+                <MdMail /> Ajukan Izin
               </button>
             </div>
 
@@ -493,6 +542,8 @@ export default function StudentAbsenPage() {
               </div>
             )}
           </div>
+          </>
+        )}
         </div>
       </div>
 

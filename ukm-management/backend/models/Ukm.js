@@ -59,6 +59,30 @@ const Ukm = sequelize.define('Ukm', {
     type: DataTypes.DATEONLY,
     allowNull: true,
   },
+  // Jadwal & Pengaturan Matrikulasi Calon Anggota (Spesifik per UKM)
+  matriculationDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
+  matriculationTime: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: '09:00 - 12:30 WITA',
+  },
+  matriculationLocation: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'Lab Komputer STMIK Lombok',
+  },
+  matriculationNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  // Tabel Agenda Matrikulasi Multi-Hari (JSON Array of schedule rows)
+  matriculationSchedule: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   // Keunggulan, Kategori & Informasi Penting untuk Calon Pendaftar
   tag: {
     type: DataTypes.STRING,

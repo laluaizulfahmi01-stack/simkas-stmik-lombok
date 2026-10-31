@@ -237,6 +237,52 @@ export default function PendaftaranUkmPage() {
             )}
           </div>
 
+          {/* Banner Kebijakan Pendaftaran Tahunan (1x Setahun Setiap Tahun Ajaran Baru) */}
+          <div
+            style={{
+              padding: '14px 18px',
+              borderRadius: 14,
+              marginBottom: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 12,
+              background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
+              border: '1px solid #bfdbfe',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: '#2563eb',
+                  color: '#fff',
+                  fontSize: 20,
+                  flexShrink: 0,
+                }}
+              >
+                <MdEventAvailable />
+              </div>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 14, color: '#1e3a8a', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span>Periode Pendaftaran: 1 Kali Setahun (Tahun Ajaran Baru 2026/2027)</span>
+                  <span style={{ fontSize: 11, background: '#2563eb', color: '#fff', padding: '2px 8px', borderRadius: 999, fontWeight: 700 }}>
+                    Batch Resmi
+                  </span>
+                </div>
+                <div style={{ fontSize: 12.5, color: '#475569', marginTop: 2 }}>
+                  Pendaftaran UKM STMIK Lombok diselenggarakan hanya <strong>1 kali dalam 1 tahun</strong> pada setiap Tahun Ajaran Baru. Pastikan Anda memilih maksimal 2 UKM terbaik sebelum periode gelombang pendaftaran ditutup.
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Navigation Sub-Tabs */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 20, borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
             <button

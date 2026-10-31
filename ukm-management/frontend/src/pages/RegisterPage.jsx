@@ -13,7 +13,7 @@ import {
 
 import SimkasLoader from '../components/SimkasLoader';
 
-const PRODI = ['Teknik Informatika', 'Sistem Informasi', 'Komputerisasi Akuntansi'];
+const PRODI = ['Teknik Informatika', 'Sistem Informasi'];
 
 export default function RegisterPage() {
   const [searchParams] = useSearchParams();
@@ -130,6 +130,31 @@ export default function RegisterPage() {
     } catch (err) {
       setLoaderState({ active: false, isExiting: false });
       setLoading(false);
+
+      // Jika NIM sudah terdaftar (HTTP 409 Conflict):
+      if (err.response?.status === 409 || err.response?.data?.message?.includes('NIM sudah terdaftar')) {
+        try {
+          // Upayakan auto-login langsung dengan kata sandi yang diinputkan pengguna
+          const loginRes = await api.post('/auth/login', {
+            nim: form.nim,
+            password: form.password,
+          });
+          if (loginRes.data.token && loginRes.data.user) {
+            login(loginRes.data.token, loginRes.data.user);
+            toast('NIM sudah terdaftar sebelumnya. Berhasil diarahkan masuk ke akun Anda!', 'success');
+            navigate('/student');
+            return;
+          }
+        } catch {
+          // Jika kata sandi berbeda, arahkan langsung ke halaman login dengan NIM terisi otomatis
+          toast('NIM ini sudah terdaftar di SIMKAS. Mengarahkan ke halaman masuk...', 'info');
+          setTimeout(() => {
+            navigate(`/login?nim=${encodeURIComponent(form.nim)}`);
+          }, 800);
+          return;
+        }
+      }
+
       toast(err.response?.data?.message || 'Pendaftaran gagal', 'error');
     }
   };

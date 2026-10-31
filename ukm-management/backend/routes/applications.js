@@ -22,7 +22,16 @@ router.get('/my', authenticateToken, async (req, res) => {
   try {
     const apps = await Application.findAll({
       where: { userId: req.user.id },
-      include: [{ model: Ukm, as: 'ukm', attributes: ['id', 'name', 'description'] }],
+      include: [{
+        model: Ukm,
+        as: 'ukm',
+        attributes: [
+          'id', 'name', 'description', 'registrationOpen',
+          'registrationOpenDate', 'registrationCloseDate',
+          'matriculationDate', 'matriculationTime',
+          'matriculationLocation', 'matriculationNotes', 'matriculationSchedule'
+        ]
+      }],
       order: [['createdAt', 'DESC']],
     });
     res.json(apps);
@@ -50,10 +59,10 @@ router.post('/', authenticateToken, async (req, res) => {
     const ukm = await Ukm.findOne({ where: { id: ukmId, isActive: true } });
     if (!ukm) return res.status(404).json({ message: 'UKM tidak ditemukan atau tidak aktif' });
 
-    // FR-PND-01: Cek jadwal pendaftaran
+    // FR-PND-01: Cek jadwal pendaftaran tahun ajaran baru (1 kali setahun)
     if (!isRegistrationOpen(ukm)) {
       return res.status(400).json({
-        message: `Pendaftaran UKM ${ukm.name} sedang tidak dibuka.`,
+        message: `Pendaftaran UKM ${ukm.name} sedang ditutup. Pendaftaran UKM hanya dibuka 1 kali dalam 1 tahun pada periode Tahun Ajaran Baru.`,
         registrationOpen: ukm.registrationOpen,
         registrationOpenDate: ukm.registrationOpenDate,
         registrationCloseDate: ukm.registrationCloseDate,

@@ -1,4 +1,5 @@
 // api/index.js - Vercel Serverless Function entry point
-const app = require('../src/index');
+const app = require('../index');
 
 module.exports = app;
+

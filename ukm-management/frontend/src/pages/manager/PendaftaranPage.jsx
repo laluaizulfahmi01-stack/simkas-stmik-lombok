@@ -8,7 +8,8 @@ import { useToast } from '../../components/Toast';
 import {
   MdEventAvailable, MdHowToReg, MdSearch, MdCheckCircle,
   MdCancel, MdHourglassTop, MdClose, MdOutlineEditCalendar,
-  MdSave, MdPersonOutline
+  MdSave, MdPersonOutline, MdAdd, MdDeleteOutline, MdRefresh,
+  MdTableChart
 } from 'react-icons/md';
 
 export default function ManagerPendaftaranPage() {
@@ -25,11 +26,27 @@ export default function ManagerPendaftaranPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
 
-  // Schedule Settings Form
+  const parseSchedule = (data) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+
+  // Schedule & Matriculation Settings Form
   const [scheduleForm, setScheduleForm] = useState({
     registrationOpen: false,
     registrationOpenDate: '',
     registrationCloseDate: '',
+    matriculationDate: '',
+    matriculationTime: '09:00 - 12:30 WITA',
+    matriculationLocation: 'Lab Komputer 1 & 2 STMIK Lombok',
+    matriculationNotes: 'Membawa KTM fisik, berpakaian rapi dan mengenakan jas almamater kampus.',
+    matriculationSchedule: [],
   });
   const [savingSchedule, setSavingSchedule] = useState(false);
 
@@ -50,10 +67,16 @@ export default function ManagerPendaftaranPage() {
       setUkms(list);
       if (list.length) {
         setActiveUkmId(list[0].id);
+        const sched = parseSchedule(list[0].matriculationSchedule);
         setScheduleForm({
           registrationOpen: Boolean(list[0].registrationOpen),
           registrationOpenDate: list[0].registrationOpenDate || '',
           registrationCloseDate: list[0].registrationCloseDate || '',
+          matriculationDate: list[0].matriculationDate || '',
+          matriculationTime: list[0].matriculationTime || '09:00 - 12:30 WITA',
+          matriculationLocation: list[0].matriculationLocation || 'Lab Komputer 1 & 2 STMIK Lombok',
+          matriculationNotes: list[0].matriculationNotes || '',
+          matriculationSchedule: sched,
         });
       }
     }).catch(() => {});
@@ -77,13 +100,70 @@ export default function ManagerPendaftaranPage() {
     loadApps();
     const curr = ukms.find(u => u.id === activeUkmId);
     if (curr) {
+      const sched = parseSchedule(curr.matriculationSchedule);
       setScheduleForm({
         registrationOpen: Boolean(curr.registrationOpen),
         registrationOpenDate: curr.registrationOpenDate || '',
         registrationCloseDate: curr.registrationCloseDate || '',
+        matriculationDate: curr.matriculationDate || '',
+        matriculationTime: curr.matriculationTime || '09:00 - 12:30 WITA',
+        matriculationLocation: curr.matriculationLocation || 'Lab Komputer 1 & 2 STMIK Lombok',
+        matriculationNotes: curr.matriculationNotes || '',
+        matriculationSchedule: sched,
       });
     }
   }, [activeUkmId]);
+
+  // Schedule Table Handlers
+  const handleAddScheduleRow = () => {
+    const rows = scheduleForm.matriculationSchedule || [];
+    const nextDayNum = rows.length + 1;
+    const newRow = {
+      day: `Hari ke-${nextDayNum}`,
+      date: '',
+      time: '09:00 - 12:00 WITA',
+      agenda: '',
+      location: 'Lab Komputer STMIK Lombok',
+      instructor: '',
+    };
+    setScheduleForm(prev => ({
+      ...prev,
+      matriculationSchedule: [...rows, newRow],
+    }));
+  };
+
+  const handleUpdateScheduleRow = (index, field, value) => {
+    setScheduleForm(prev => {
+      const rows = [...(prev.matriculationSchedule || [])];
+      rows[index] = { ...rows[index], [field]: value };
+      return { ...prev, matriculationSchedule: rows };
+    });
+  };
+
+  const handleDeleteScheduleRow = (index) => {
+    setScheduleForm(prev => {
+      const rows = (prev.matriculationSchedule || []).filter((_, idx) => idx !== index);
+      const renumbered = rows.map((r, i) => ({ ...r, day: `Hari ke-${i + 1}` }));
+      return { ...prev, matriculationSchedule: renumbered };
+    });
+  };
+
+  const handleLoadDefaultWeekSchedule = () => {
+    const default7Days = [
+      { day: 'Hari ke-1', date: '2026-11-02', time: '09:00 - 12:00 WITA', agenda: 'Orientasi Organisasi, Pengenalan Visi Misi & Tata Tertib UKM', location: 'Lab Komputer 1 STMIK', instructor: 'Pembina & Pengurus UKM' },
+      { day: 'Hari ke-2', date: '2026-11-03', time: '09:00 - 12:00 WITA', agenda: 'Fundamental Keilmuan Organisasi & Pengenalan Tools Divisi', location: 'Lab Komputer 2 STMIK', instructor: 'Divisi Teknis' },
+      { day: 'Hari ke-3', date: '2026-11-04', time: '13:30 - 16:30 WITA', agenda: 'Praktik Langsung & Pendalaman Materi Studi Kasus', location: 'Lab Komputer 1 STMIK', instructor: 'Mentor Senior' },
+      { day: 'Hari ke-4', date: '2026-11-05', time: '09:00 - 12:00 WITA', agenda: 'Workshop Kolaborasi Kelompok & Pemecahan Masalah', location: 'Lab Komputer 1 & 2', instructor: 'Tim Fasilitator' },
+      { day: 'Hari ke-5', date: '2026-11-06', time: '14:00 - 17:00 WITA', agenda: 'Etika Berorganisasi, Manajemen Kepemimpinan & Waktu', location: 'Auditorium Lt. 3 STMIK', instructor: 'Narasumber Kampus' },
+      { day: 'Hari ke-6', date: '2026-11-07', time: '09:00 - 13:00 WITA', agenda: 'Uji Kemampuan Kelompok, Presentasi Karya & Evaluasi Sesi', location: 'Lab Komputer 1 STMIK', instructor: 'Dewan Penguji' },
+      { day: 'Hari ke-7', date: '2026-11-08', time: '10:00 - 13:00 WITA', agenda: 'Evaluasi Kelulusan, Pengumuman & Pelantikan Anggota Resmi', location: 'Aula Utama Kampus', instructor: 'Ketua UKM & BPH' },
+    ];
+    setScheduleForm(prev => ({
+      ...prev,
+      matriculationSchedule: default7Days,
+    }));
+    toast('Template jadwal matrikulasi 1 minggu berhasil dimuat! Silakan sesuaikan dan klik Simpan.', 'info');
+  };
 
   // Filter & Search logic
   useEffect(() => {
@@ -106,16 +186,29 @@ export default function ManagerPendaftaranPage() {
 
   // Save Schedule Settings (FR-PND-01)
   const handleSaveSchedule = async e => {
-    e.preventDefault();
-    if (!activeUkmId) return;
+    if (e && e.preventDefault) e.preventDefault();
+    if (!activeUkmId) {
+      return toast('Pilih UKM terlebih dahulu', 'error');
+    }
     setSavingSchedule(true);
     try {
-      await api.put(`/ukm/${activeUkmId}`, scheduleForm);
-      toast('Jadwal pendaftaran UKM berhasil diperbarui!', 'success');
+      const payload = {
+        registrationOpen: Boolean(scheduleForm.registrationOpen),
+        registrationOpenDate: scheduleForm.registrationOpenDate || null,
+        registrationCloseDate: scheduleForm.registrationCloseDate || null,
+        matriculationDate: scheduleForm.matriculationDate || null,
+        matriculationTime: scheduleForm.matriculationTime || null,
+        matriculationLocation: scheduleForm.matriculationLocation || null,
+        matriculationNotes: scheduleForm.matriculationNotes || null,
+        matriculationSchedule: JSON.stringify(scheduleForm.matriculationSchedule || []),
+      };
+      const res = await api.put(`/ukm/${activeUkmId}`, payload);
+      toast('Pengaturan gelombang pendaftaran & tabel matrikulasi berhasil disimpan!', 'success');
       // Update local state
-      setUkms(ukms.map(u => u.id === activeUkmId ? { ...u, ...scheduleForm } : u));
+      setUkms(prev => prev.map(u => u.id === activeUkmId ? { ...u, ...res.data } : u));
     } catch (err) {
-      toast(err.response?.data?.message || 'Gagal menyimpan jadwal pendaftaran', 'error');
+      console.error('Save schedule error:', err);
+      toast(err.response?.data?.message || 'Gagal menyimpan pengaturan jadwal', 'error');
     } finally {
       setSavingSchedule(false);
     }
@@ -197,10 +290,10 @@ export default function ManagerPendaftaranPage() {
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <MdOutlineEditCalendar style={{ color: 'var(--primary)', fontSize: 20 }} />
-                  Pengaturan Gelombang Pendaftaran ({activeUkm?.name})
+                  Pengaturan Gelombang Pendaftaran Tahunan ({activeUkm?.name})
                 </h3>
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                  Atur apakah pendaftaran dibuka untuk mahasiswa dan tentukan batas tanggalnya (PRD FR-PND-01)
+                  Pendaftaran UKM dibuka <strong>1 kali dalam 1 tahun</strong> pada setiap Tahun Ajaran Baru. Tentukan jadwal dan status pembukaan pendaftaran bagi mahasiswa baru/calon anggota.
                 </p>
               </div>
 
@@ -229,48 +322,257 @@ export default function ManagerPendaftaranPage() {
               </div>
             </div>
 
-            <form onSubmit={handleSaveSchedule} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, alignItems: 'flex-end' }}>
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Status Open Recruitment</label>
-                <select
-                  className="input"
-                  value={scheduleForm.registrationOpen ? 'true' : 'false'}
-                  onChange={e => setScheduleForm({ ...scheduleForm, registrationOpen: e.target.value === 'true' })}
-                >
-                  <option value="true">🟢 Buka Pendaftaran (Aktif)</option>
-                  <option value="false">⚪ Tutup Pendaftaran (Nonaktif)</option>
-                </select>
+            <form onSubmit={handleSaveSchedule} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              {/* Baris 1: Pengaturan Gelombang Open Recruitment */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
+                    Status Open Recruitment
+                  </label>
+                  <select
+                    className="input"
+                    value={scheduleForm.registrationOpen ? 'true' : 'false'}
+                    onChange={e => setScheduleForm({ ...scheduleForm, registrationOpen: e.target.value === 'true' })}
+                  >
+                    <option value="true">🟢 Buka Pendaftaran (Aktif)</option>
+                    <option value="false">⚪ Tutup Pendaftaran (Nonaktif)</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
+                    Tanggal Buka Pendaftaran
+                  </label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={scheduleForm.registrationOpenDate}
+                    onChange={e => setScheduleForm({ ...scheduleForm, registrationOpenDate: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
+                    Tanggal Tutup Pendaftaran
+                  </label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={scheduleForm.registrationCloseDate}
+                    onChange={e => setScheduleForm({ ...scheduleForm, registrationCloseDate: e.target.value })}
+                  />
+                </div>
               </div>
 
+              {/* Baris 2: Catatan & Persyaratan Umum */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Tanggal Buka Pendaftaran</label>
+                <label style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
+                  Ketentuan Umum & Syarat Kelulusan Matrikulasi ({activeUkm?.name})
+                </label>
                 <input
-                  type="date"
+                  type="text"
                   className="input"
-                  value={scheduleForm.registrationOpenDate}
-                  onChange={e => setScheduleForm({ ...scheduleForm, registrationOpenDate: e.target.value })}
+                  placeholder="Contoh: Membawa KTM fisik, bersepatu, berpakaian rapi dengan jas almamater kampus STMIK Lombok"
+                  value={scheduleForm.matriculationNotes}
+                  onChange={e => setScheduleForm({ ...scheduleForm, matriculationNotes: e.target.value })}
                 />
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Tanggal Tutup Pendaftaran</label>
-                <input
-                  type="date"
-                  className="input"
-                  value={scheduleForm.registrationCloseDate}
-                  onChange={e => setScheduleForm({ ...scheduleForm, registrationCloseDate: e.target.value })}
-                />
+              {/* Baris 3: TABEL RUNDOWN JADWAL MATRIKULASI (Bisa Seminggu Penuh / Multi-Hari) */}
+              <div
+                style={{
+                  background: 'var(--bg-card, #ffffff)',
+                  border: '1.5px solid var(--border)',
+                  borderRadius: 16,
+                  padding: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)', fontWeight: 800, fontSize: 15 }}>
+                      <MdTableChart style={{ fontSize: 20, color: 'var(--primary)' }} />
+                      <span>Tabel Jadwal & Agenda Matrikulasi ({activeUkm?.name})</span>
+                    </div>
+                    <p style={{ margin: '4px 0 0', fontSize: 12.5, color: 'var(--text-secondary)' }}>
+                      Susun jadwal matrikulasi hari demi hari secara rapi (bisa 1 hari, 3 hari, hingga 1 minggu penuh). Calon mahasiswa akan melihat tabel ini di akun mereka.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleLoadDefaultWeekSchedule}
+                      style={{ borderRadius: 999, fontSize: 12, fontWeight: 700 }}
+                      title="Isi otomatis dengan contoh susunan 7 hari (1 minggu)"
+                    >
+                      <MdRefresh style={{ marginRight: 4 }} /> Muat Template 1 Minggu
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={handleAddScheduleRow}
+                      style={{ borderRadius: 999, fontSize: 12, fontWeight: 700 }}
+                    >
+                      <MdAdd style={{ marginRight: 4 }} /> Tambah Hari / Sesi
+                    </button>
+                  </div>
+                </div>
+
+                {/* Table Editor */}
+                {(!scheduleForm.matriculationSchedule || scheduleForm.matriculationSchedule.length === 0) ? (
+                  <div
+                    style={{
+                      border: '2px dashed var(--border)',
+                      borderRadius: 14,
+                      padding: '36px 16px',
+                      textAlign: 'center',
+                      background: 'var(--bg-subtle, #f8fafc)',
+                    }}
+                  >
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>📅</div>
+                    <h4 style={{ margin: '0 0 6px', fontWeight: 800, fontSize: 15, color: 'var(--text-primary)' }}>
+                      Belum Ada Tabel Jadwal Matrikulasi
+                    </h4>
+                    <p style={{ margin: '0 auto 16px', fontSize: 13, color: 'var(--text-secondary)', maxWidth: 460 }}>
+                      Klik tombol di bawah untuk menambahkan sesi pertama atau gunakan template standar 1 minggu penuh.
+                    </p>
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={handleLoadDefaultWeekSchedule}
+                        style={{ borderRadius: 999 }}
+                      >
+                        <MdRefresh style={{ marginRight: 6 }} /> Gunakan Contoh 7 Hari Matrikulasi
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={handleAddScheduleRow}
+                        style={{ borderRadius: 999 }}
+                      >
+                        <MdAdd style={{ marginRight: 4 }} /> Tambah Manual
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="table-wrap" style={{ borderRadius: 12, border: '1px solid var(--border)', overflowX: 'auto' }}>
+                    <table style={{ width: '100%', minWidth: 860, borderCollapse: 'collapse', textAlign: 'left' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg-subtle, #f8fafc)', borderBottom: '1.5px solid var(--border)' }}>
+                          <th style={{ padding: '10px 12px', fontSize: 12, fontWeight: 800, width: 110 }}>Hari</th>
+                          <th style={{ padding: '10px 12px', fontSize: 12, fontWeight: 800, width: 150 }}>Tanggal</th>
+                          <th style={{ padding: '10px 12px', fontSize: 12, fontWeight: 800, width: 160 }}>Waktu / Jam</th>
+                          <th style={{ padding: '10px 12px', fontSize: 12, fontWeight: 800 }}>Materi / Agenda Sesi</th>
+                          <th style={{ padding: '10px 12px', fontSize: 12, fontWeight: 800, width: 180 }}>Lokasi / Lab</th>
+                          <th style={{ padding: '10px 12px', fontSize: 12, fontWeight: 800, width: 160 }}>Pemateri / PJ</th>
+                          <th style={{ padding: '10px 12px', fontSize: 12, fontWeight: 800, width: 60, textAlign: 'center' }}>Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scheduleForm.matriculationSchedule.map((row, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                            <td style={{ padding: '8px 10px' }}>
+                              <input
+                                className="input"
+                                style={{ padding: '6px 8px', fontSize: 12, fontWeight: 800, textAlign: 'center', background: 'var(--bg-subtle)' }}
+                                value={row.day || `Hari ke-${idx + 1}`}
+                                onChange={e => handleUpdateScheduleRow(idx, 'day', e.target.value)}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              <input
+                                type="date"
+                                className="input"
+                                style={{ padding: '6px 8px', fontSize: 12 }}
+                                value={row.date || ''}
+                                onChange={e => handleUpdateScheduleRow(idx, 'date', e.target.value)}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              <input
+                                className="input"
+                                style={{ padding: '6px 8px', fontSize: 12 }}
+                                placeholder="09:00 - 12:00 WITA"
+                                value={row.time || ''}
+                                onChange={e => handleUpdateScheduleRow(idx, 'time', e.target.value)}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              <input
+                                className="input"
+                                style={{ padding: '6px 8px', fontSize: 12, fontWeight: 600 }}
+                                placeholder="Materi / agenda kegiatan..."
+                                value={row.agenda || ''}
+                                onChange={e => handleUpdateScheduleRow(idx, 'agenda', e.target.value)}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              <input
+                                className="input"
+                                style={{ padding: '6px 8px', fontSize: 12 }}
+                                placeholder="Lab Komputer 1..."
+                                value={row.location || ''}
+                                onChange={e => handleUpdateScheduleRow(idx, 'location', e.target.value)}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              <input
+                                className="input"
+                                style={{ padding: '6px 8px', fontSize: 12 }}
+                                placeholder="Pemateri / PJ..."
+                                value={row.instructor || ''}
+                                onChange={e => handleUpdateScheduleRow(idx, 'instructor', e.target.value)}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteScheduleRow(idx)}
+                                title="Hapus Sesi Ini"
+                                style={{
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  color: '#dc2626',
+                                  border: 'none',
+                                  width: 30,
+                                  height: 30,
+                                  borderRadius: 8,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: 'pointer',
+                                  fontSize: 16,
+                                }}
+                              >
+                                <MdDeleteOutline />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
-              <div>
+              {/* Submit Button & Total Summary */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, paddingTop: 4 }}>
+                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                  Total Terjadwal: <strong>{scheduleForm.matriculationSchedule?.length || 0} Hari Matrikulasi</strong>
+                </div>
+
                 <button
                   type="submit"
-                  className="btn btn-primary w-full"
+                  className="btn btn-primary"
                   disabled={savingSchedule}
-                  style={{ justifyContent: 'center', height: 40 }}
+                  style={{ minWidth: 280, justifyContent: 'center', height: 44, fontWeight: 800, fontSize: 13 }}
                 >
-                  <MdSave style={{ marginRight: 6 }} />
-                  {savingSchedule ? 'Menyimpan...' : 'Simpan Pengaturan Jadwal'}
+                  <MdSave style={{ marginRight: 6, fontSize: 18 }} />
+                  {savingSchedule ? 'Menyimpan...' : 'Simpan Pengaturan Jadwal & Tabel Matrikulasi'}
                 </button>
               </div>
             </form>

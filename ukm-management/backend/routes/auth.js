@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { User, Ukm, UserUkm, Application } = require('../models');
 const { authLimiter, auditLog } = require('../security');
-const { Op } = require('sequelize');
+const { Op, Sequelize } = require('sequelize');
 require('dotenv').config();
 
 const router = express.Router();
@@ -102,12 +102,16 @@ router.post('/login', authLimiter, async (req, res) => {
         [Op.or]: [
           { nim: identifier },
           { email: identifier },
+          Sequelize.where(
+            Sequelize.fn('LOWER', Sequelize.col('name')),
+            identifier.toLowerCase()
+          ),
         ],
       },
     });
     if (!user) {
       auditLog('AUTH_LOGIN_FAILED_NOT_FOUND', null, { identifier, ip });
-      return res.status(401).json({ message: 'NIM atau Email belum terdaftar di sistem' });
+      return res.status(401).json({ message: 'NIM, Nama, atau Email belum terdaftar di sistem' });
     }
 
     const valid = await user.validatePassword(password);

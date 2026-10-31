@@ -1,12 +1,14 @@
 // src/pages/student/KasPage.jsx
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from '../../components/Sidebar';
 import api from '../../api/axios';
 import {
   MdSearch, MdDownload, MdPrint, MdAccountBalance, MdClose,
   MdNorthEast, MdSavings, MdPeople, MdTrendingUp, MdBarChart,
-  MdPieChart, MdTune, MdNotificationsNone, MdKeyboardArrowDown
+  MdPieChart, MdTune, MdNotificationsNone, MdKeyboardArrowDown,
+  MdArrowDownward, MdArrowUpward, MdCalendarToday
 } from 'react-icons/md';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -178,25 +180,17 @@ export default function StudentKasPage() {
           <div className="pro-header-title-block">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <h1 className="pro-page-title">Catatan Kas</h1>
-              <span className="pro-title-pill-badge">{ukms.length} UKM Aktif</span>
+              <span className="pro-title-pill-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: ukms.length ? 'rgba(34, 197, 94, 0.12)' : 'rgba(245, 158, 11, 0.12)', color: 'var(--text-primary)', borderColor: ukms.length ? 'rgba(34, 197, 94, 0.3)' : 'rgba(245, 158, 11, 0.3)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: ukms.length ? '#22c55e' : '#f59e0b', display: 'inline-block' }}></span>
+                {ukms.length ? (activeUkm?.name ? `${activeUkm.name} • Anggota Aktif` : 'Kas Terbuka UKM') : 'Akses Terbatas: Khusus Anggota Resmi'}
+              </span>
             </div>
             <p className="pro-page-subtitle">
-              Pantau seluruh rincian dan arus kas keuangan {activeUkm?.name || 'UKM'} Anda secara terbuka
+              Pantau seluruh rincian dan transparansi arus kas UKM Anda secara terbuka
             </p>
           </div>
 
           <div className="pro-header-actions-block">
-            <div
-              className="pro-circle-btn"
-              title="Cari Transaksi"
-              onClick={() => document.getElementById('search-kas-input')?.focus()}
-            >
-              <MdSearch />
-            </div>
-            <div className="pro-circle-btn" title="Notifikasi Kas">
-              <MdNotificationsNone />
-              <span className="pro-bell-dot"></span>
-            </div>
             <div className="pro-user-pill">
               <div className="pro-user-avatar">
                 {user?.avatar ? (
@@ -206,36 +200,98 @@ export default function StudentKasPage() {
                 )}
               </div>
               <div className="pro-user-text">
-                <span className="pro-user-welcome">Welcome back</span>
+                <span className="pro-user-welcome">Mahasiswa</span>
                 <span className="pro-user-name">{user?.name || 'Mahasiswa'}</span>
               </div>
-              <MdKeyboardArrowDown style={{ color: 'var(--text-muted)', fontSize: 18 }} />
             </div>
           </div>
         </div>
 
-        {/* Subbar with UKM tabs & Action buttons */}
-        <div className="pro-subbar">
-          <div className="ukm-switcher">
-            {ukms.map(u => (
-              <button
-                key={u.id}
-                className={`ukm-tab${(activeUkmId || ukms[0]?.id) === u.id ? ' active' : ''}`}
-                onClick={() => setActiveUkmId(u.id)}
+        {/* JIKA BELUM RESMI DITERIMA: TAMPILKAN PROTEKSI RAMAH */}
+        {!ukms.length ? (
+          <div className="main-content">
+            <div
+              className="card"
+              style={{
+                textAlign: 'center',
+                padding: '48px 24px',
+                maxWidth: 620,
+                margin: '40px auto',
+                borderRadius: 24,
+                boxShadow: '0 12px 36px rgba(0,0,0,0.06)',
+              }}
+            >
+              <div
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: '50%',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  color: '#dc2626',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 34,
+                  margin: '0 auto 18px',
+                }}
               >
-                {u.name}
-              </button>
-            ))}
-          </div>
+                🔒
+              </div>
 
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button className="btn btn-ghost btn-sm" onClick={() => setReportModal(true)} style={{ borderRadius: 999 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 900, marginBottom: 8, color: 'var(--text-primary)' }}>
+                Buku Kas Hanya untuk Anggota Resmi
+              </h2>
+
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 24 }}>
+                Sesuai aturan transparansi kampus STMIK Lombok, laporan uang kas dan pembukuan hanya dapat diakses oleh mahasiswa yang telah <strong>resmi diterima</strong> menjadi anggota UKM.
+                <br /><br />
+                Status akun Anda saat ini sedang dalam <strong>tahap seleksi / matrikulasi</strong>. Setelah pengelola UKM menerima pengajuan Anda, akses kas akan terbuka secara otomatis.
+              </p>
+
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <Link
+                  to="/student"
+                  className="btn btn-primary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, fontWeight: 700 }}
+                >
+                  Pantau Status Seleksi & Matrikulasi →
+                </Link>
+                <Link
+                  to="/student/pendaftaran"
+                  className="btn btn-ghost"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 20px', borderRadius: 12, fontWeight: 700 }}
+                >
+                  Detail Pengajuan UKM
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Subbar with UKM tabs (if multi) & Action buttons */}
+            <div className="pro-subbar" style={{ display: 'flex', justifyContent: ukms.length > 1 ? 'space-between' : 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          {ukms.length > 1 && (
+            <div className="ukm-switcher">
+              {ukms.map(u => (
+                <button
+                  key={u.id}
+                  className={`ukm-tab${(activeUkmId || ukms[0]?.id) === u.id ? ' active' : ''}`}
+                  onClick={() => setActiveUkmId(u.id)}
+                >
+                  {u.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="pro-subbar-actions" style={{ marginLeft: ukms.length > 1 ? 'auto' : 0 }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => setReportModal(true)} style={{ borderRadius: 999, fontWeight: 600 }}>
               <MdPrint /> Pratinjau Rekap
             </button>
             <button
               className="btn btn-primary btn-sm"
               onClick={exportCSV}
-              style={{ background: '#09090b', borderColor: '#09090b', color: '#fff', borderRadius: 999, padding: '8px 20px' }}
+              style={{ background: '#09090b', borderColor: '#09090b', color: '#fff', borderRadius: 999, padding: '8px 20px', fontWeight: 600 }}
             >
               <MdDownload /> Unduh Data (CSV)
             </button>
@@ -244,65 +300,6 @@ export default function StudentKasPage() {
 
         {/* Main Content */}
         <div className="main-content">
-          {/* ════ Multi-UKM Financial Sparkline Cards ════ */}
-          {ukms.length > 1 && (
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  📊 Performa & Grafik Kas Tiap UKM Anda
-                </h3>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  Klik kartu UKM untuk memuat grafik & riwayat terbuka
-                </span>
-              </div>
-
-              <div className="pro-ukm-charts-grid">
-                {ukms.map(u => {
-                  const uData = allUkmData[u.id];
-                  const uStats = uData?.stats || {};
-                  const uMonthly = (uData?.monthly || []).map(m => ({
-                    ...m,
-                    income: Number(m.income || 0),
-                    expense: Number(m.expense || 0),
-                  }));
-                  const isActive = (activeUkmId || ukms[0]?.id) === u.id;
-                  const uBal = (uStats.totalIncome || 0) - (uStats.totalExpense || 0);
-
-                  return (
-                    <div
-                      key={u.id}
-                      className={`pro-ukm-card${isActive ? ' active' : ''}`}
-                      onClick={() => setActiveUkmId(u.id)}
-                    >
-                      <div className="pro-ukm-top">
-                        <span className="pro-ukm-name">{u.name}</span>
-                        <span className={`badge ${isActive ? 'badge-blue' : 'badge-gray'}`} style={{ fontSize: 10, padding: '2px 8px' }}>
-                          {isActive ? 'Aktif Dipilih' : 'Pilih'}
-                        </span>
-                      </div>
-
-                      <div className="pro-ukm-balance">{fmt(uBal)}</div>
-                      <div className="pro-ukm-meta">
-                        <span style={{ color: '#16a34a' }}>+ {fmt(uStats.totalIncome || 0)}</span>
-                        <span style={{ color: '#dc2626' }}>- {fmt(uStats.totalExpense || 0)}</span>
-                      </div>
-
-                      {/* Mini Sparkline Chart for this UKM */}
-                      <div style={{ height: 44, marginTop: 10 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={uMonthly.slice(-5)} barGap={4}>
-                            <Bar dataKey="income" fill={isActive ? '#ccf726' : '#22c55e'} radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="expense" fill={isActive ? '#93c5fd' : '#cbd5e1'} radius={[4, 4, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* ════ 4 Top Stat Cards (Influency Style) ════ */}
           <div className="pro-dashboard-grid-4">
             {/* Card 1: Lime Hero Card */}
@@ -429,13 +426,13 @@ export default function StudentKasPage() {
               </div>
 
               {/* Recharts Bar Chart */}
-              <div style={{ height: 260, marginTop: 10 }}>
+              <div className="pro-main-chart-wrap" style={{ height: 260, marginTop: 10 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={formattedChartData} barGap={8}>
+                  <BarChart data={formattedChartData} barGap={6} margin={{ top: 12, right: 10, left: -6, bottom: 2 }}>
                     <XAxis
                       dataKey="label"
                       stroke="var(--text-muted)"
-                      fontSize={12}
+                      fontSize={11}
                       tickLine={false}
                       axisLine={{ stroke: 'var(--border)' }}
                     />
@@ -444,22 +441,23 @@ export default function StudentKasPage() {
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={v => 'Rp ' + (v / 1000) + 'k'}
+                      width={44}
+                      tickFormatter={v => (v >= 1000 ? Math.round(v / 1000) + 'k' : v)}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
                     <Bar
                       dataKey="income"
                       name="Pemasukan"
                       fill="#d4ff00"
-                      radius={[10, 10, 0, 0]}
-                      barSize={18}
+                      radius={[8, 8, 0, 0]}
+                      maxBarSize={22}
                     />
                     <Bar
                       dataKey="expense"
                       name="Pengeluaran"
                       fill="#93c5fd"
-                      radius={[10, 10, 0, 0]}
-                      barSize={18}
+                      radius={[8, 8, 0, 0]}
+                      maxBarSize={22}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -491,7 +489,7 @@ export default function StudentKasPage() {
                 <span className="pro-pill-btn">Semester Gasal ⌵</span>
               </div>
 
-              {/* Overlapping Bubbles (Exact Influency Geometry) */}
+              {/* Overlapping Bubbles with crystal clear visibility */}
               <div className="pro-bubbles-wrap">
                 <div className="pro-bubble lime">
                   <div className="pro-bubble-val">{formatShortRupiah(totalIncome)}</div>
@@ -504,6 +502,32 @@ export default function StudentKasPage() {
                 <div className="pro-bubble slate">
                   <div className="pro-bubble-val">{formatShortRupiah(balance)}</div>
                   <div className="pro-bubble-lbl">Sisa Kas</div>
+                </div>
+              </div>
+
+              {/* Proportional Ratio Bar */}
+              <div style={{ marginTop: 10, marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>
+                  <span>Komposisi Arus Dana</span>
+                  <span>{totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0}% Saldo Likuid</span>
+                </div>
+                <div style={{ height: 8, borderRadius: 999, background: 'var(--bg-base)', overflow: 'hidden', display: 'flex', border: '1px solid var(--border)' }}>
+                  <div
+                    style={{
+                      width: `${totalIncome + totalExpense > 0 ? Math.max(10, Math.min(90, Math.round((totalIncome / (totalIncome + totalExpense)) * 100))) : 50}%`,
+                      background: '#d4ff00',
+                      transition: 'width 0.4s ease'
+                    }}
+                    title={`Pemasukan: ${fmt(totalIncome)}`}
+                  />
+                  <div
+                    style={{
+                      width: `${totalIncome + totalExpense > 0 ? Math.max(10, Math.min(90, Math.round((totalExpense / (totalIncome + totalExpense)) * 100))) : 50}%`,
+                      background: '#93c5fd',
+                      transition: 'width 0.4s ease'
+                    }}
+                    title={`Pengeluaran: ${fmt(totalExpense)}`}
+                  />
                 </div>
               </div>
 
@@ -567,20 +591,9 @@ export default function StudentKasPage() {
             </div>
 
             {/* Filter Bar */}
-            <div
-              style={{
-                display: 'flex',
-                gap: 10,
-                flexWrap: 'wrap',
-                background: 'var(--bg-base)',
-                padding: 12,
-                borderRadius: 16,
-                marginBottom: 18,
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ position: 'relative', flex: '1 1 200px' }}>
-                <MdSearch style={{ position: 'absolute', left: 12, top: 11, color: 'var(--text-muted)', fontSize: 18 }} />
+            <div className="kas-filter-container">
+              <div className="kas-filter-search">
+                <MdSearch className="search-icon" />
                 <input
                   type="text"
                   id="search-kas-input"
@@ -593,10 +606,9 @@ export default function StudentKasPage() {
               </div>
 
               <select
-                className="input"
+                className="input kas-filter-select"
                 value={typeFilter}
                 onChange={e => setTypeFilter(e.target.value)}
-                style={{ width: 140, height: 40, fontSize: 13, background: 'var(--bg-surface)' }}
               >
                 <option value="all">Semua Tipe</option>
                 <option value="income">↓ Pemasukan</option>
@@ -604,10 +616,9 @@ export default function StudentKasPage() {
               </select>
 
               <select
-                className="input"
+                className="input kas-filter-select"
                 value={categoryFilter}
                 onChange={e => setCategoryFilter(e.target.value)}
-                style={{ width: 160, height: 40, fontSize: 13, background: 'var(--bg-surface)' }}
               >
                 <option value="all">Semua Kategori</option>
                 <option value="iuran">Iuran Anggota</option>
@@ -632,7 +643,7 @@ export default function StudentKasPage() {
               )}
             </div>
 
-            {/* Transactions Table */}
+            {/* Transactions View: Desktop Table + Mobile Cards */}
             {loading ? (
               <div className="empty-state"><div className="icon">⏳</div><p>Memuat transaksi kas...</p></div>
             ) : filtered.length === 0 ? (
@@ -641,47 +652,88 @@ export default function StudentKasPage() {
                 <p>Tidak ada transaksi kas yang sesuai.</p>
               </div>
             ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Tanggal</th>
-                      <th>Keterangan / Uraian</th>
-                      <th>Kategori</th>
-                      <th>Tipe Kas</th>
-                      <th>Jumlah Nominal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((t, idx) => (
-                      <tr key={t.id}>
-                        <td style={{ color: 'var(--text-muted)' }}>{idx + 1}</td>
-                        <td style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-                          {new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </td>
-                        <td style={{ fontWeight: 600 }}>{t.description || '-'}</td>
-                        <td>
-                          <span className="badge badge-gray" style={{ textTransform: 'capitalize' }}>
-                            {t.category || (t.type === 'income' ? 'iuran' : 'operasional')}
-                          </span>
-                        </td>
-                        <td>
-                          <span className={`badge ${t.type === 'income' ? 'badge-green' : 'badge-red'}`}>
-                            {t.type === 'income' ? '↓ Masuk' : '↑ Keluar'}
-                          </span>
-                        </td>
-                        <td style={{ fontWeight: 800, color: t.type === 'income' ? 'var(--green)' : 'var(--red)', whiteSpace: 'nowrap' }}>
-                          {t.type === 'income' ? '+ ' : '- '}{fmt(t.amount)}
-                        </td>
+              <>
+                {/* 1. Desktop Full Table View */}
+                <div className="table-wrap desktop-table-only">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Tanggal</th>
+                        <th>Keterangan / Uraian</th>
+                        <th>Kategori</th>
+                        <th>Tipe Kas</th>
+                        <th>Jumlah Nominal</th>
                       </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((t, idx) => (
+                        <tr key={t.id}>
+                          <td style={{ color: 'var(--text-muted)' }}>{idx + 1}</td>
+                          <td style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+                            {new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td style={{ fontWeight: 600 }}>{t.description || '-'}</td>
+                          <td>
+                            <span className="badge badge-gray" style={{ textTransform: 'capitalize' }}>
+                              {t.category || (t.type === 'income' ? 'iuran' : 'operasional')}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${t.type === 'income' ? 'badge-green' : 'badge-red'}`}>
+                              {t.type === 'income' ? '↓ Masuk' : '↑ Keluar'}
+                            </span>
+                          </td>
+                          <td style={{ fontWeight: 800, color: t.type === 'income' ? 'var(--green)' : 'var(--red)', whiteSpace: 'nowrap' }}>
+                            {t.type === 'income' ? '+ ' : '- '}{fmt(t.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 2. Mobile Clean Cards View (Full Description, Zero Truncation) */}
+                <div className="mobile-cards-only">
+                  <div className="mobile-tx-cards-list">
+                    {filtered.map((t) => (
+                      <div key={t.id} className="mobile-tx-card">
+                        <div className="mobile-tx-card-top">
+                          <div className={`mobile-tx-icon-pill ${t.type}`}>
+                            {t.type === 'income' ? <MdArrowDownward /> : <MdArrowUpward />}
+                          </div>
+                          <div className="mobile-tx-info">
+                            <div className="mobile-tx-desc">{t.description || '-'}</div>
+                            <div className="mobile-tx-meta-row">
+                              <span className="mobile-tx-date">
+                                <MdCalendarToday style={{ marginRight: 4, fontSize: 12 }} />
+                                {new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                              <span className="badge badge-gray" style={{ textTransform: 'capitalize', fontSize: 10, padding: '2px 8px' }}>
+                                {t.category || (t.type === 'income' ? 'iuran' : 'operasional')}
+                              </span>
+                            </div>
+                          </div>
+                          <div className={`mobile-tx-nominal ${t.type}`}>
+                            {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
+                          </div>
+                        </div>
+
+                        <div className="mobile-tx-card-bottom">
+                          <span className={`badge ${t.type === 'income' ? 'badge-green' : 'badge-red'}`} style={{ fontSize: 11, padding: '3px 10px' }}>
+                            {t.type === 'income' ? '📈 Pemasukan Kas' : '📉 Pengeluaran Kas'}
+                          </span>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
+        </>
+      )}
       </div>
 
       {/* Report Modal */}

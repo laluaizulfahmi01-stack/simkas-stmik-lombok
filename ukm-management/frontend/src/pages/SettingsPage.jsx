@@ -15,10 +15,7 @@ import {
 
 const PRODI_LIST = [
   'Teknik Informatika',
-  'Sistem Informasi',
-  'Komputerisasi Akuntansi',
-  'Manajemen Informatika',
-  'Administrasi Kampus'
+  'Sistem Informasi'
 ];
 
 export default function SettingsPage() {
@@ -69,6 +66,17 @@ export default function SettingsPage() {
         prodi: user.prodi || '',
         avatar: user.avatar || null,
       }));
+    }
+  }, [user]);
+
+  // Load Managed UKM (for Manager role)
+  const [managedUkm, setManagedUkm] = useState(null);
+  useEffect(() => {
+    if (user?.role === 'manager') {
+      api.get('/ukm').then(r => {
+        const mine = r.data.find(u => Number(u.managerId) === Number(user?.id));
+        if (mine) setManagedUkm(mine);
+      }).catch(() => {});
     }
   }, [user]);
 
@@ -246,8 +254,24 @@ export default function SettingsPage() {
   };
 
   const roleLabel =
-    user?.role === 'superadmin' ? 'Super Administrator' :
-    user?.role === 'manager'    ? 'Pengelola UKM Kampus' : 'Mahasiswa STMIK Lombok';
+    user?.role === 'superadmin' ? 'Super Administrator SIMKAS' :
+    user?.role === 'manager'    ? (managedUkm ? `Pengelola ${managedUkm.name}` : 'Pengelola UKM Kampus') : 'Mahasiswa STMIK Lombok';
+
+  const idLabel =
+    user?.role === 'manager' ? 'ID Pengelola / Username' :
+    user?.role === 'superadmin' ? 'ID Akun Administrator' : 'Nomor Induk Mahasiswa (NIM)';
+
+  const idShortLabel =
+    user?.role === 'manager' ? 'ID Pengelola:' :
+    user?.role === 'superadmin' ? 'ID Admin:' : 'NIM Mahasiswa:';
+
+  const idHint =
+    user?.role === 'manager' ? `Identitas resmi akun pengelola ${managedUkm?.name || 'UKM'} di STMIK Lombok` :
+    user?.role === 'superadmin' ? 'Identitas unik Super Administrator SIMKAS STMIK Lombok' : 'Nomor Induk Mahasiswa resmi terdaftar di STMIK Lombok';
+
+  const prodiLabel =
+    user?.role === 'manager' ? 'Program Studi Asal / Bidang' :
+    user?.role === 'superadmin' ? 'Unit Kerja / Departemen' : 'Program Studi';
 
   const initials = user?.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
 
@@ -283,6 +307,7 @@ export default function SettingsPage() {
         <div className="main-content">
           {/* Settings Tabs Header */}
           <div
+            className="settings-tabs-header"
             style={{
               display: 'flex',
               gap: 8,
@@ -290,13 +315,14 @@ export default function SettingsPage() {
               paddingBottom: 12,
               marginBottom: 24,
               overflowX: 'auto',
+              WebkitOverflowScrolling: 'touch',
             }}
           >
             <button
               type="button"
               onClick={() => setActiveTab('profile')}
               className={`btn btn-sm ${activeTab === 'profile' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 12, padding: '9px 18px', fontSize: 13 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 12, padding: '9px 18px', fontSize: 13, flexShrink: 0, whiteSpace: 'nowrap' }}
             >
               <MdPerson style={{ fontSize: 18 }} /> Profil & Foto
             </button>
@@ -305,7 +331,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => setActiveTab('verification')}
               className={`btn btn-sm ${activeTab === 'verification' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 12, padding: '9px 18px', fontSize: 13 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 12, padding: '9px 18px', fontSize: 13, flexShrink: 0, whiteSpace: 'nowrap' }}
             >
               <MdVerified style={{ fontSize: 18 }} /> Verifikasi Identitas
               {user?.verificationStatus === 'pending' && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }} />}
@@ -315,7 +341,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => setActiveTab('security')}
               className={`btn btn-sm ${activeTab === 'security' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 12, padding: '9px 18px', fontSize: 13 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 12, padding: '9px 18px', fontSize: 13, flexShrink: 0, whiteSpace: 'nowrap' }}
             >
               <MdSecurity style={{ fontSize: 18 }} /> Keamanan & Password
             </button>
@@ -324,7 +350,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => setActiveTab('preferences')}
               className={`btn btn-sm ${activeTab === 'preferences' ? 'btn-primary' : 'btn-ghost'}`}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 12, padding: '9px 18px', fontSize: 13 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 12, padding: '9px 18px', fontSize: 13, flexShrink: 0, whiteSpace: 'nowrap' }}
             >
               <MdTune style={{ fontSize: 18 }} /> Preferensi & Tema
             </button>
@@ -334,9 +360,9 @@ export default function SettingsPage() {
               TAB 1: PROFIL & FOTO
               ══════════════════════════════════════════════════════════ */}
           {activeTab === 'profile' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 320px) 1fr', gap: 24, alignItems: 'start' }}>
+            <div className="settings-profile-layout">
               {/* Left Column: Avatar Card */}
-              <div className="card" style={{ textAlign: 'center', padding: '30px 24px' }}>
+              <div className="card" style={{ textAlign: 'center', padding: '30px 24px', width: '100%', boxSizing: 'border-box' }}>
                 <div style={{ position: 'relative', width: 120, height: 120, margin: '0 auto 18px' }}>
                   <div
                     style={{
@@ -435,9 +461,15 @@ export default function SettingsPage() {
                 {/* Identity summary */}
                 <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)', textAlign: 'left', fontSize: 12 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', color: 'var(--text-secondary)' }}>
-                    <span>NIM / Identitas:</span>
+                    <span>{idShortLabel}</span>
                     <strong style={{ color: 'var(--text-primary)' }}>{user?.nim}</strong>
                   </div>
+                  {user?.role === 'manager' && managedUkm && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', color: 'var(--text-secondary)' }}>
+                      <span>Unit Kelola:</span>
+                      <strong style={{ color: 'var(--primary)', fontWeight: 800 }}>{managedUkm.name}</strong>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', color: 'var(--text-secondary)' }}>
                     <span>Status Akun:</span>
                     <strong style={{ color: user?.isVerified ? 'var(--green)' : '#f59e0b' }}>
@@ -448,52 +480,56 @@ export default function SettingsPage() {
               </div>
 
               {/* Right Column: Profile Form */}
-              <div className="card">
+              <div className="card" style={{ width: '100%', boxSizing: 'border-box' }}>
                 <div style={{ marginBottom: 20 }}>
                   <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
                     Informasi Profil & Data Diri
                   </h3>
                   <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                    Perbarui nama lengkap, kontak nomor WhatsApp, dan program studi kamu.
+                    {user?.role === 'manager'
+                      ? `Perbarui nama lengkap, kontak WhatsApp, dan informasi profil Pengelola ${managedUkm?.name || 'UKM'}.`
+                      : user?.role === 'superadmin'
+                      ? 'Perbarui nama lengkap, kontak WhatsApp, dan preferensi akun Administrator.'
+                      : 'Perbarui nama lengkap, kontak nomor WhatsApp, dan data diri akademik Anda.'}
                   </p>
                 </div>
 
                 <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="settings-form-row">
                     <div className="form-group">
                       <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <MdBadge style={{ color: 'var(--primary)' }} /> Nomor Induk Mahasiswa (NIM)
+                        <MdBadge style={{ color: 'var(--primary)' }} /> {idLabel}
                       </label>
                       <input
                         className="input"
                         value={user?.nim || ''}
                         disabled
                         style={{ opacity: 0.75, cursor: 'not-allowed', background: 'var(--bg-subtle)' }}
-                        title="NIM tidak dapat diubah secara mandiri untuk alasan keamanan akademik"
+                        title={user?.role === 'student' ? 'NIM tidak dapat diubah secara mandiri untuk alasan keamanan akademik' : 'ID akun/username tidak dapat diubah secara mandiri untuk keamanan sistem'}
                       />
                       <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                        Identitas unik resmi terdaftar di STMIK Lombok
+                        {idHint}
                       </span>
                     </div>
 
                     <div className="form-group">
                       <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <MdPerson style={{ color: 'var(--primary)' }} /> Nama Lengkap
+                        <MdPerson style={{ color: 'var(--primary)' }} /> Nama Lengkap {user?.role === 'manager' ? '& Gelar' : ''}
                       </label>
                       <input
                         className="input"
                         value={profileForm.name}
                         onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
                         required
-                        placeholder="Nama lengkap kamu"
+                        placeholder={user?.role === 'manager' ? 'Contoh: Rian Pratama, S.Kom' : 'Nama lengkap Anda'}
                       />
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="settings-form-row">
                     <div className="form-group">
                       <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <MdSchool style={{ color: 'var(--primary)' }} /> Program Studi
+                        <MdSchool style={{ color: 'var(--primary)' }} /> {prodiLabel}
                       </label>
                       <select
                         className="input"
@@ -504,6 +540,12 @@ export default function SettingsPage() {
                         {PRODI_LIST.map(p => (
                           <option key={p} value={p}>{p}</option>
                         ))}
+                        {user?.role === 'superadmin' && (
+                          <>
+                            <option value="Biro Kemahasiswaan & BAAK">Biro Kemahasiswaan & BAAK</option>
+                            <option value="UPT Komputer & Sistem Informasi">UPT Komputer & Sistem Informasi</option>
+                          </>
+                        )}
                       </select>
                     </div>
 
@@ -529,18 +571,30 @@ export default function SettingsPage() {
                       className="input"
                       value={profileForm.email}
                       onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
-                      placeholder="nama@mhs.stmik-lombok.ac.id"
+                      placeholder={
+                        user?.role === 'manager'
+                          ? `${user?.nim || 'manager'}@stmiklombok.ac.id`
+                          : user?.role === 'superadmin'
+                          ? 'admin@stmiklombok.ac.id'
+                          : `${user?.nim || '220101001'}@mhs.stmiklombok.ac.id`
+                      }
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>Bio & Minat Singkat</label>
+                    <label>{user?.role === 'manager' ? 'Bio, Visi Pembinaan & Catatan Pengelola' : user?.role === 'superadmin' ? 'Catatan Profil Administrator' : 'Bio & Catatan Mahasiswa'}</label>
                     <textarea
                       className="input"
                       rows={3}
                       value={profileForm.bio}
                       onChange={e => setProfileForm({ ...profileForm, bio: e.target.value })}
-                      placeholder="Tuliskan minat bakat, keahlian, atau moto kamu di UKM..."
+                      placeholder={
+                        user?.role === 'manager'
+                          ? 'Tuliskan fokus pembinaan organisasi, visi keilmuan, atau catatan kepengurusan UKM...'
+                          : user?.role === 'superadmin'
+                          ? 'Tuliskan catatan ringkas profil administrator SIMKAS...'
+                          : 'Tuliskan minat bakat, keahlian, atau moto Anda di UKM...'
+                      }
                     />
                   </div>
 
@@ -566,7 +620,7 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {/* Status Banner */}
               <div
-                className="card"
+                className="card settings-status-banner"
                 style={{
                   background: user?.isVerified
                     ? (isDark ? 'rgba(34, 197, 94, 0.12)' : '#f0fdf4')
@@ -602,14 +656,14 @@ export default function SettingsPage() {
                       ? 'Akun Telah Terverifikasi Resmi'
                       : user?.verificationStatus === 'pending'
                       ? 'Permohonan Verifikasi Sedang Ditinjau'
-                      : 'Akun Kamu Belum Terverifikasi'}
+                      : 'Akun Belum Terverifikasi'}
                   </h3>
                   <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                     {user?.isVerified
                       ? 'Selamat! Akun Anda telah lolos verifikasi identitas resmi STMIK Lombok dan memiliki lencana tanda centang resmi.'
                       : user?.verificationStatus === 'pending'
-                      ? 'Dokumen bukti identitas kamu telah terkirim dan sedang menunggu persetujuan Super Administrator.'
-                      : 'Verifikasi akun kamu untuk mendapatkan centang resmi, akses penuh ke absensi khusus, hak suara UKM, dan sertifikat digital.'}
+                      ? 'Dokumen bukti identitas Anda telah terkirim dan sedang menunggu persetujuan Super Administrator.'
+                      : 'Verifikasi akun Anda untuk mendapatkan centang resmi, hak akses penuh kegiatan, hak suara UKM, dan sertifikat resmi.'}
                   </p>
                 </div>
               </div>
@@ -821,14 +875,14 @@ export default function SettingsPage() {
               TAB 3: KEAMANAN & KATA SANDI
               ══════════════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
-            <div style={{ maxWidth: 640 }}>
-              <div className="card">
+            <div style={{ maxWidth: 640, width: '100%' }}>
+              <div className="card" style={{ width: '100%', boxSizing: 'border-box' }}>
                 <div style={{ marginBottom: 20 }}>
                   <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
                     Perbarui Kata Sandi Akun
                   </h3>
                   <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                    Pastikan kata sandi kamu kuat dan mengandung kombinasi huruf, angka, dan simbol.
+                    Pastikan kata sandi Anda kuat dan mengandung kombinasi huruf, angka, dan simbol.
                   </p>
                 </div>
 
@@ -844,7 +898,7 @@ export default function SettingsPage() {
                         value={passwordForm.oldPassword}
                         onChange={e => setPasswordForm({ ...passwordForm, oldPassword: e.target.value })}
                         required
-                        placeholder="Masukkan password akun kamu saat ini"
+                        placeholder="Masukkan password akun Anda saat ini"
                         style={{ paddingRight: 40 }}
                       />
                       <span
@@ -910,8 +964,8 @@ export default function SettingsPage() {
               TAB 4: PREFERENSI & TEMA
               ══════════════════════════════════════════════════════════ */}
           {activeTab === 'preferences' && (
-            <div style={{ maxWidth: 680 }}>
-              <div className="card">
+            <div style={{ maxWidth: 680, width: '100%' }}>
+              <div className="card" style={{ width: '100%', boxSizing: 'border-box' }}>
                 <div style={{ marginBottom: 20 }}>
                   <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>
                     Tema Tampilan Antarmuka
@@ -921,7 +975,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+                <div className="settings-theme-grid">
                   {/* Light mode tile */}
                   <div
                     onClick={isDark ? toggleTheme : undefined}

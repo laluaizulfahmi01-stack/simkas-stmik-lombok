@@ -52,7 +52,7 @@ async function seed() {
       nim: 'manager_haluner',
       name: 'Nadia Putri, S.Kom',
       email: 'manager.haluner@stmiklombok.ac.id',
-      prodi: 'Komputerisasi Akuntansi',
+      prodi: 'Sistem Informasi',
       password: 'manager123',
       role: 'manager',
       isVerified: true,

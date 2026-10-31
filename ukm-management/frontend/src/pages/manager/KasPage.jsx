@@ -8,7 +8,8 @@ import {
   MdAdd, MdEdit, MdDelete, MdClose, MdPrint, MdDownload,
   MdSearch, MdFilterList, MdNorthEast, MdAccountBalance,
   MdSavings, MdPeople, MdTrendingUp, MdBarChart, MdPieChart,
-  MdTune, MdCalendarMonth, MdNotificationsNone, MdKeyboardArrowDown
+  MdTune, MdCalendarMonth, MdNotificationsNone, MdKeyboardArrowDown,
+  MdArrowDownward, MdArrowUpward, MdCalendarToday
 } from 'react-icons/md';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -52,17 +53,21 @@ export default function ManagerKasPage() {
     const prefix = Number(val) < 0 ? '-' : '';
     if (n >= 1000000) return prefix + 'Rp ' + (n / 1000000).toFixed(1) + 'M';
     if (n >= 1000) return prefix + 'Rp ' + Math.round(n / 1000) + 'k';
-    return 'Rp ' + n.toLocaleString('id-ID');
+    return prefix + 'Rp ' + n.toLocaleString('id-ID');
   };
 
-  // Load UKMs (All UKMs for cross-comparison & charts per UKM)
+  // Load UKMs strictly scoped to manager (or all if superadmin)
   useEffect(() => {
     api.get('/ukm').then(r => {
       const all = r.data || [];
-      setUkms(all);
+      const isSuper = user?.role === 'superadmin';
       const mine = all.filter(u => Number(u.managerId) === Number(user?.id));
-      if (mine.length) setActiveId(mine[0].id);
-      else if (all.length) setActiveId(all[0].id);
+      const targetList = isSuper ? all : mine;
+      setUkms(targetList);
+      if (targetList.length) setActiveId(targetList[0].id);
+    }).catch(err => {
+      console.error(err);
+      setUkms([]);
     });
   }, [user]);
 
@@ -253,10 +258,13 @@ export default function ManagerKasPage() {
           <div className="pro-header-title-block">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <h1 className="pro-page-title">Kelola Kas</h1>
-              <span className="pro-title-pill-badge">{ukms.length} UKM Dikelola</span>
+              <span className="pro-title-pill-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(34, 197, 94, 0.12)', color: 'var(--text-primary)', borderColor: 'rgba(34, 197, 94, 0.3)' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }}></span>
+                {activeUkm?.name ? `${activeUkm.name} • Pengelola Resmi` : 'Pengelola UKM'}
+              </span>
             </div>
             <p className="pro-page-subtitle">
-              Pembukuan resmi & transparansi perputaran dana {activeUkm?.name || 'UKM'}
+              Pembukuan resmi & transparansi perputaran kas {activeUkm?.name || 'UKM Binaan'}
             </p>
           </div>
 
@@ -281,7 +289,7 @@ export default function ManagerKasPage() {
                 )}
               </div>
               <div className="pro-user-text">
-                <span className="pro-user-welcome">Welcome back</span>
+                <span className="pro-user-welcome">Pengelola Kas</span>
                 <span className="pro-user-name">{user?.name || 'Pengelola UKM'}</span>
               </div>
               <MdKeyboardArrowDown style={{ color: 'var(--text-muted)', fontSize: 18 }} />
@@ -289,28 +297,30 @@ export default function ManagerKasPage() {
           </div>
         </div>
 
-        {/* Subbar with UKM tabs & Action buttons */}
-        <div className="pro-subbar">
-          <div className="ukm-switcher">
-            {ukms.map(u => (
-              <button
-                key={u.id}
-                className={`ukm-tab${activeId === u.id ? ' active' : ''}`}
-                onClick={() => setActiveId(u.id)}
-              >
-                {u.name}
-              </button>
-            ))}
-          </div>
+        {/* Subbar with UKM tabs (if multi) & Action buttons */}
+        <div className="pro-subbar" style={{ display: 'flex', justifyContent: ukms.length > 1 ? 'space-between' : 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          {ukms.length > 1 && (
+            <div className="ukm-switcher">
+              {ukms.map(u => (
+                <button
+                  key={u.id}
+                  className={`ukm-tab${activeId === u.id ? ' active' : ''}`}
+                  onClick={() => setActiveId(u.id)}
+                >
+                  {u.name}
+                </button>
+              ))}
+            </div>
+          )}
 
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button className="btn btn-ghost btn-sm" onClick={() => setLpjModal(true)} style={{ borderRadius: 999 }}>
+          <div className="pro-subbar-actions" style={{ marginLeft: ukms.length > 1 ? 'auto' : 0 }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => setLpjModal(true)} style={{ borderRadius: 999, fontWeight: 600 }}>
               <MdPrint /> Ekspor LPJ
             </button>
             <button
               className="btn btn-primary btn-sm"
               onClick={openAdd}
-              style={{ background: '#09090b', borderColor: '#09090b', color: '#fff', borderRadius: 999, padding: '8px 20px' }}
+              style={{ background: '#09090b', borderColor: '#09090b', color: '#fff', borderRadius: 999, padding: '8px 20px', fontWeight: 600 }}
             >
               <MdAdd /> Catat Transaksi
             </button>
@@ -319,63 +329,6 @@ export default function ManagerKasPage() {
 
         {/* Main Content */}
         <div className="main-content">
-          {/* ════ Multi-UKM Financial Sparkline Cards (Requested: grafik di setiap manager per-UKM) ════ */}
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                📊 Performa & Grafik Kas Tiap UKM
-              </h3>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Klik kartu UKM untuk memuat grafik & pembukuan detail
-              </span>
-            </div>
-
-            <div className="pro-ukm-charts-grid">
-              {ukms.map(u => {
-                const uData = allUkmData[u.id];
-                const uStats = uData?.stats || {};
-                const uMonthly = (uData?.monthly || []).map(m => ({
-                  ...m,
-                  income: Number(m.income || 0),
-                  expense: Number(m.expense || 0),
-                }));
-                const isActive = activeId === u.id;
-                const uBal = (uStats.totalIncome || 0) - (uStats.totalExpense || 0);
-
-                return (
-                  <div
-                    key={u.id}
-                    className={`pro-ukm-card${isActive ? ' active' : ''}`}
-                    onClick={() => setActiveId(u.id)}
-                  >
-                    <div className="pro-ukm-top">
-                      <span className="pro-ukm-name">{u.name}</span>
-                      <span className={`badge ${isActive ? 'badge-blue' : 'badge-gray'}`} style={{ fontSize: 10, padding: '2px 8px' }}>
-                        {isActive ? 'Aktif Dipilih' : 'Pilih'}
-                      </span>
-                    </div>
-
-                    <div className="pro-ukm-balance">{fmt(uBal)}</div>
-                    <div className="pro-ukm-meta">
-                      <span style={{ color: '#16a34a' }}>+ {fmt(uStats.totalIncome || 0)}</span>
-                      <span style={{ color: '#dc2626' }}>- {fmt(uStats.totalExpense || 0)}</span>
-                    </div>
-
-                    {/* Mini Sparkline Chart for this UKM */}
-                    <div style={{ height: 44, marginTop: 10 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={uMonthly.slice(-5)} barGap={4}>
-                          <Bar dataKey="income" fill={isActive ? '#ccf726' : '#22c55e'} radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="expense" fill={isActive ? '#93c5fd' : '#cbd5e1'} radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
           {/* ════ 4 Top Stat Cards (Influency Style from Reference) ════ */}
           <div className="pro-dashboard-grid-4">
             {/* Card 1: Lime Hero Highlight Card */}
@@ -502,13 +455,13 @@ export default function ManagerKasPage() {
               </div>
 
               {/* Recharts Bar Chart (Matching Reference Style) */}
-              <div style={{ height: 260, marginTop: 10 }}>
+              <div className="pro-main-chart-wrap" style={{ height: 260, marginTop: 10 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={formattedChartData} barGap={8}>
+                  <BarChart data={formattedChartData} barGap={6} margin={{ top: 12, right: 10, left: -6, bottom: 2 }}>
                     <XAxis
                       dataKey="label"
                       stroke="var(--text-muted)"
-                      fontSize={12}
+                      fontSize={11}
                       tickLine={false}
                       axisLine={{ stroke: 'var(--border)' }}
                     />
@@ -517,22 +470,23 @@ export default function ManagerKasPage() {
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={v => 'Rp' + (v / 1000) + 'k'}
+                      width={44}
+                      tickFormatter={v => (v >= 1000 ? Math.round(v / 1000) + 'k' : v)}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.02)' }} />
                     <Bar
                       dataKey="income"
                       name="Pemasukan"
                       fill="#d4ff00"
-                      radius={[10, 10, 0, 0]}
-                      barSize={18}
+                      radius={[8, 8, 0, 0]}
+                      maxBarSize={22}
                     />
                     <Bar
                       dataKey="expense"
                       name="Pengeluaran"
                       fill="#93c5fd"
-                      radius={[10, 10, 0, 0]}
-                      barSize={18}
+                      radius={[8, 8, 0, 0]}
+                      maxBarSize={22}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -564,7 +518,7 @@ export default function ManagerKasPage() {
                 <span className="pro-pill-btn">Semester Gasal ⌵</span>
               </div>
 
-              {/* Overlapping Circles/Bubbles like Reference Image */}
+              {/* Overlapping Circles/Bubbles with crystal clear visibility */}
               <div className="pro-bubbles-wrap">
                 <div className="pro-bubble lime">
                   <div className="pro-bubble-val">{formatShortRupiah(totalIncome)}</div>
@@ -577,6 +531,32 @@ export default function ManagerKasPage() {
                 <div className="pro-bubble slate">
                   <div className="pro-bubble-val">{formatShortRupiah(balance)}</div>
                   <div className="pro-bubble-lbl">Sisa Kas</div>
+                </div>
+              </div>
+
+              {/* Proportional Ratio Bar */}
+              <div style={{ marginTop: 10, marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6 }}>
+                  <span>Komposisi Arus Dana</span>
+                  <span>{totalIncome > 0 ? Math.round((balance / totalIncome) * 100) : 0}% Saldo Likuid</span>
+                </div>
+                <div style={{ height: 8, borderRadius: 999, background: 'var(--bg-base)', overflow: 'hidden', display: 'flex', border: '1px solid var(--border)' }}>
+                  <div
+                    style={{
+                      width: `${totalIncome + totalExpense > 0 ? Math.max(10, Math.min(90, Math.round((totalIncome / (totalIncome + totalExpense)) * 100))) : 50}%`,
+                      background: '#d4ff00',
+                      transition: 'width 0.4s ease'
+                    }}
+                    title={`Pemasukan: ${fmt(totalIncome)}`}
+                  />
+                  <div
+                    style={{
+                      width: `${totalIncome + totalExpense > 0 ? Math.max(10, Math.min(90, Math.round((totalExpense / (totalIncome + totalExpense)) * 100))) : 50}%`,
+                      background: '#93c5fd',
+                      transition: 'width 0.4s ease'
+                    }}
+                    title={`Pengeluaran: ${fmt(totalExpense)}`}
+                  />
                 </div>
               </div>
 
@@ -617,7 +597,7 @@ export default function ManagerKasPage() {
 
           {/* ════ Table & Filter Card ════ */}
           <div className="card" style={{ borderRadius: 24 }}>
-            <div className="flex justify-between items-center" style={{ flexWrap: 'wrap', gap: 12, marginBottom: 18 }}>
+            <div className="kas-table-header-row">
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 800 }}>Catatan Transaksi Buku Kas</h3>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>
@@ -626,7 +606,7 @@ export default function ManagerKasPage() {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="kas-table-actions-group">
                 <button className="btn btn-ghost btn-sm" onClick={exportCSV} style={{ borderRadius: 999 }}>
                   <MdDownload /> Unduh CSV
                 </button>
@@ -644,21 +624,10 @@ export default function ManagerKasPage() {
             </div>
 
             {/* Filter Bar */}
-            <div
-              style={{
-                display: 'flex',
-                gap: 10,
-                flexWrap: 'wrap',
-                background: 'var(--bg-base)',
-                padding: 12,
-                borderRadius: 16,
-                marginBottom: 18,
-                alignItems: 'center',
-              }}
-            >
+            <div className="kas-filter-container">
               {/* Search */}
-              <div style={{ position: 'relative', flex: '1 1 200px' }}>
-                <MdSearch style={{ position: 'absolute', left: 12, top: 11, color: 'var(--text-muted)', fontSize: 18 }} />
+              <div className="kas-filter-search">
+                <MdSearch className="search-icon" />
                 <input
                   type="text"
                   id="search-kas-input-manager"
@@ -672,10 +641,9 @@ export default function ManagerKasPage() {
 
               {/* Type Filter */}
               <select
-                className="input"
+                className="input kas-filter-select"
                 value={typeFilter}
                 onChange={e => setTypeFilter(e.target.value)}
-                style={{ width: 140, height: 40, fontSize: 13, background: 'var(--bg-surface)' }}
               >
                 <option value="all">Semua Jenis</option>
                 <option value="income">↓ Pemasukan</option>
@@ -684,10 +652,9 @@ export default function ManagerKasPage() {
 
               {/* Category Filter */}
               <select
-                className="input"
+                className="input kas-filter-select"
                 value={categoryFilter}
                 onChange={e => setCategoryFilter(e.target.value)}
-                style={{ width: 160, height: 40, fontSize: 13, background: 'var(--bg-surface)' }}
               >
                 <option value="all">Semua Kategori</option>
                 <option value="iuran">Iuran Anggota</option>
@@ -698,22 +665,20 @@ export default function ManagerKasPage() {
               </select>
 
               {/* Date Filters */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div className="kas-filter-date-row">
                 <input
                   type="date"
-                  className="input"
+                  className="input kas-date-input"
                   value={startDate}
                   onChange={e => setStartDate(e.target.value)}
-                  style={{ width: 135, height: 40, fontSize: 12, background: 'var(--bg-surface)' }}
                   title="Dari Tanggal"
                 />
                 <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>s/d</span>
                 <input
                   type="date"
-                  className="input"
+                  className="input kas-date-input"
                   value={endDate}
                   onChange={e => setEndDate(e.target.value)}
-                  style={{ width: 135, height: 40, fontSize: 12, background: 'var(--bg-surface)' }}
                   title="Sampai Tanggal"
                 />
               </div>
@@ -735,7 +700,7 @@ export default function ManagerKasPage() {
               )}
             </div>
 
-            {/* Transactions Table */}
+            {/* Transactions View: Desktop Table + Mobile Cards */}
             {loading ? (
               <div className="empty-state"><div className="icon">⏳</div><p>Memuat catatan transaksi kas...</p></div>
             ) : filtered.length === 0 ? (
@@ -744,55 +709,102 @@ export default function ManagerKasPage() {
                 <p>{transactions.length === 0 ? 'Belum ada catatan kas untuk UKM ini.' : 'Tidak ada transaksi yang cocok dengan filter.'}</p>
               </div>
             ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Tanggal</th>
-                      <th>Uraian / Keterangan</th>
-                      <th>Kategori</th>
-                      <th>Jenis Kas</th>
-                      <th>Jumlah Nominal</th>
-                      <th>Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((t, idx) => (
-                      <tr key={t.id}>
-                        <td style={{ color: 'var(--text-muted)' }}>{idx + 1}</td>
-                        <td style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-                          {new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </td>
-                        <td style={{ fontWeight: 600 }}>{t.description || '-'}</td>
-                        <td>
-                          <span className="badge badge-gray" style={{ textTransform: 'capitalize' }}>
-                            {t.category || (t.type === 'income' ? 'iuran' : 'operasional')}
+              <>
+                {/* 1. Desktop Tabular View */}
+                <div className="table-wrap desktop-table-only">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Tanggal</th>
+                        <th>Uraian / Keterangan</th>
+                        <th>Kategori</th>
+                        <th>Jenis Kas</th>
+                        <th>Jumlah Nominal</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((t, idx) => (
+                        <tr key={t.id}>
+                          <td style={{ color: 'var(--text-muted)' }}>{idx + 1}</td>
+                          <td style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
+                            {new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td style={{ fontWeight: 600 }}>{t.description || '-'}</td>
+                          <td>
+                            <span className="badge badge-gray" style={{ textTransform: 'capitalize' }}>
+                              {t.category || (t.type === 'income' ? 'iuran' : 'operasional')}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`badge ${t.type === 'income' ? 'badge-green' : 'badge-red'}`}>
+                              {t.type === 'income' ? '↓ Pemasukan' : '↑ Pengeluaran'}
+                            </span>
+                          </td>
+                          <td style={{ fontWeight: 800, color: t.type === 'income' ? 'var(--green)' : 'var(--red)', whiteSpace: 'nowrap' }}>
+                            {t.type === 'income' ? '+ ' : '- '}{fmt(t.amount)}
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} title="Edit Transaksi">
+                                <MdEdit />
+                              </button>
+                              <button className="btn btn-danger btn-sm" onClick={() => remove(t.id)} title="Hapus Transaksi">
+                                <MdDelete />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 2. Mobile Clean Cards View (No Horizontal Overflow or Truncation) */}
+                <div className="mobile-cards-only">
+                  <div className="mobile-tx-cards-list">
+                    {filtered.map((t) => (
+                      <div key={t.id} className="mobile-tx-card">
+                        <div className="mobile-tx-card-top">
+                          <div className={`mobile-tx-icon-pill ${t.type}`}>
+                            {t.type === 'income' ? <MdArrowDownward /> : <MdArrowUpward />}
+                          </div>
+                          <div className="mobile-tx-info">
+                            <div className="mobile-tx-desc">{t.description || '-'}</div>
+                            <div className="mobile-tx-meta-row">
+                              <span className="mobile-tx-date">
+                                <MdCalendarToday style={{ marginRight: 4, fontSize: 12 }} />
+                                {new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                              <span className="badge badge-gray" style={{ textTransform: 'capitalize', fontSize: 10, padding: '2px 8px' }}>
+                                {t.category || (t.type === 'income' ? 'iuran' : 'operasional')}
+                              </span>
+                            </div>
+                          </div>
+                          <div className={`mobile-tx-nominal ${t.type}`}>
+                            {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
+                          </div>
+                        </div>
+
+                        <div className="mobile-tx-card-bottom">
+                          <span className={`badge ${t.type === 'income' ? 'badge-green' : 'badge-red'}`} style={{ fontSize: 11, padding: '3px 10px' }}>
+                            {t.type === 'income' ? '↓ Pemasukan Kas' : '↑ Pengeluaran Kas'}
                           </span>
-                        </td>
-                        <td>
-                          <span className={`badge ${t.type === 'income' ? 'badge-green' : 'badge-red'}`}>
-                            {t.type === 'income' ? '↓ Pemasukan' : '↑ Pengeluaran'}
-                          </span>
-                        </td>
-                        <td style={{ fontWeight: 800, color: t.type === 'income' ? 'var(--green)' : 'var(--red)', whiteSpace: 'nowrap' }}>
-                          {t.type === 'income' ? '+ ' : '- '}{fmt(t.amount)}
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} title="Edit Transaksi">
-                              <MdEdit />
+                          <div className="mobile-tx-btn-group">
+                            <button className="btn btn-ghost btn-sm" onClick={() => openEdit(t)} style={{ borderRadius: 8, padding: '4px 10px', fontSize: 12 }}>
+                              <MdEdit /> Edit
                             </button>
-                            <button className="btn btn-danger btn-sm" onClick={() => remove(t.id)} title="Hapus Transaksi">
-                              <MdDelete />
+                            <button className="btn btn-danger btn-sm" onClick={() => remove(t.id)} style={{ borderRadius: 8, padding: '4px 10px', fontSize: 12 }}>
+                              <MdDelete /> Hapus
                             </button>
                           </div>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
