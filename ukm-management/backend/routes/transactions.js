@@ -29,7 +29,7 @@ router.get('/:ukmId', authenticateToken, verifyAccess, async (req, res) => {
   const { ukmId } = req.params;
   try {
     const transactions = await Transaction.findAll({
-      where: { ukmId },
+      where: { ukmId, isCancelled: false },
       include: [{ model: User, as: 'user', attributes: ['id', 'nim', 'name'] }],
       order: [['date', 'DESC'], ['createdAt', 'DESC']],
     });

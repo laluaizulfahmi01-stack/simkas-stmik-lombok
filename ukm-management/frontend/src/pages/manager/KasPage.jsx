@@ -126,12 +126,13 @@ export default function ManagerKasPage() {
   };
 
   const openEdit = t => {
+    const rawDate = t.date ? String(t.date).slice(0, 10) : new Date().toISOString().slice(0, 10);
     setForm({
       amount: t.amount,
       description: t.description || '',
       type: t.type,
       category: t.category || (t.type === 'income' ? 'iuran' : 'operasional'),
-      date: t.date ? new Date(t.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      date: rawDate,
     });
     setEditId(t.id);
     setModal(true);
@@ -158,18 +159,20 @@ export default function ManagerKasPage() {
   };
 
   const remove = async id => {
-    if (!confirm('Yakin ingin membatalkan/menghapus catatan transaksi ini?')) return;
+    if (!window.confirm('Yakin ingin membatalkan/menghapus catatan transaksi ini?')) return;
     try {
       await api.delete(`/transactions/${activeId}/${id}`);
       toast('Transaksi berhasil dihapus 🗑️', 'success');
       load();
-    } catch {
-      toast('Gagal menghapus transaksi', 'error');
+    } catch (err) {
+      console.error(err);
+      toast(err.response?.data?.message || 'Gagal menghapus transaksi', 'error');
     }
   };
 
   // Filter transactions
   const filtered = transactions.filter(t => {
+    if (t.isCancelled) return false;
     const matchDesc = (t.description || '').toLowerCase().includes(search.toLowerCase());
     const matchType = typeFilter === 'all' || t.type === typeFilter;
     const matchCategory = categoryFilter === 'all' || t.category === categoryFilter;
